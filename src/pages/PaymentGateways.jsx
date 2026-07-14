@@ -16,7 +16,11 @@ const PROVIDERS = [
     credentialFields: [
       { key: "keyId", label: "Key ID" },
       { key: "keySecret", label: "Key secret" },
-      { key: "webhookSecret", label: "Webhook secret" },
+      {
+        key: "webhookSecret",
+        label: "Webhook secret (optional)",
+        hint: "Not required for checkout — only needed if you set up a webhook in your Razorpay dashboard for automatic payment confirmation. Leave blank otherwise.",
+      },
     ],
   },
   {
@@ -126,13 +130,15 @@ function GatewayCard({ provider, gateway, onSave, saving }) {
               <option value="live">Live</option>
             </Select>
             {provider.credentialFields.map((field) => (
-              <Input
-                key={field.key}
-                label={field.label}
-                value={form.credentials[field.key]}
-                onChange={(e) => setCredential(field.key, e.target.value)}
-                placeholder={field.key.toLowerCase().includes("secret") || field.key === "saltKey" ? "••••••••" : ""}
-              />
+              <div key={field.key} className="flex flex-col gap-1">
+                <Input
+                  label={field.label}
+                  value={form.credentials[field.key]}
+                  onChange={(e) => setCredential(field.key, e.target.value)}
+                  placeholder={field.key.toLowerCase().includes("secret") || field.key === "saltKey" ? "••••••••" : ""}
+                />
+                {field.hint && <p className="text-xs text-text-muted">{field.hint}</p>}
+              </div>
             ))}
           </>
         )}
