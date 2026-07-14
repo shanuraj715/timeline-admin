@@ -10,6 +10,9 @@ import Navigation from "./pages/Navigation";
 import Footer from "./pages/Footer";
 import PagesList from "./pages/PagesList";
 import PageEditor from "./pages/PageEditor";
+import Pricing from "./pages/Pricing";
+import PaymentGateways from "./pages/PaymentGateways";
+import Orders from "./pages/Orders";
 import { Placeholder } from "./pages/Placeholder";
 
 const queryClient = new QueryClient({
@@ -38,9 +41,9 @@ export default function App() {
                   <Route path="pages" element={<PagesList />} />
                   <Route path="pages/new" element={<PageEditor />} />
                   <Route path="pages/:id" element={<PageEditor />} />
-                  <Route path="pricing" element={<Placeholder title="Pricing plans" />} />
-                  <Route path="payment-gateways" element={<Placeholder title="Payment gateways" />} />
-                  <Route path="orders" element={<Placeholder title="Orders" />} />
+                  <Route path="pricing" element={<Pricing />} />
+                  <Route path="payment-gateways" element={<PaymentGateways />} />
+                  <Route path="orders" element={<Orders />} />
                   <Route path="feature-flags" element={<Placeholder title="Feature flags" />} />
                 </Route>
               </Routes>
