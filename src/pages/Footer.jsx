@@ -9,13 +9,14 @@ import {
 } from "../api/cms";
 import { Card, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
-import { Input, Checkbox } from "../components/ui/Input";
+import { Input, Checkbox, Select } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Modal } from "../components/ui/Modal";
+import { RichTextEditor } from "../components/ui/RichTextEditor";
 import { EmptyState } from "../components/ui/Table";
 import { useToast } from "../context/ToastContext";
 
-const EMPTY_COLUMN = { title: "", enabled: true, links: [] };
+const EMPTY_COLUMN = { title: "", enabled: true, contentType: "links", html: "", links: [] };
 
 export default function Footer() {
   const queryClient = useQueryClient();
@@ -94,17 +95,21 @@ export default function Footer() {
                 <Switch checked={col.enabled} onChange={(enabled) => toggleMutation.mutate({ id: col._id, enabled })} />
               </div>
               <CardBody className="flex-1">
-                <ul className="flex flex-col gap-1 text-sm text-text-muted">
-                  {col.links.length === 0 ? (
-                    <li className="italic">No links</li>
-                  ) : (
-                    col.links.map((l, i) => (
-                      <li key={i}>
-                        {l.label} <span className="text-text-muted">— {l.url}</span>
-                      </li>
-                    ))
-                  )}
-                </ul>
+                {col.contentType === "html" ? (
+                  <p className="text-sm italic text-text-muted">Custom HTML block</p>
+                ) : (
+                  <ul className="flex flex-col gap-1 text-sm text-text-muted">
+                    {col.links.length === 0 ? (
+                      <li className="italic">No links</li>
+                    ) : (
+                      col.links.map((l, i) => (
+                        <li key={i}>
+                          {l.label} <span className="text-text-muted">— {l.url}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
               </CardBody>
               <div className="flex items-center justify-between border-t border-border px-4 py-2">
                 <div className="flex gap-1">
@@ -174,7 +179,12 @@ export default function Footer() {
 }
 
 function FooterColumnModal({ column, onClose, onSave, saving }) {
-  const [form, setForm] = useState({ ...column, links: column.links?.map((l) => ({ ...l })) || [] });
+  const [form, setForm] = useState({
+    contentType: "links",
+    html: "",
+    ...column,
+    links: column.links?.map((l) => ({ ...l })) || [],
+  });
 
   function addLink() {
     setForm((f) => ({ ...f, links: [...f.links, { label: "", url: "", openInNewTab: false }] }));
@@ -210,36 +220,51 @@ function FooterColumnModal({ column, onClose, onSave, saving }) {
           checked={form.enabled}
           onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
         />
+        <Select
+          label="Content type"
+          value={form.contentType}
+          onChange={(e) => setForm({ ...form, contentType: e.target.value })}
+        >
+          <option value="links">Link list</option>
+          <option value="html">Custom HTML</option>
+        </Select>
 
-        <div className="border-t border-border pt-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium text-text">Links</span>
-            <Button variant="secondary" size="sm" onClick={addLink}>
-              Add link
-            </Button>
+        {form.contentType === "html" ? (
+          <div className="border-t border-border pt-4">
+            <span className="mb-2 block text-sm font-medium text-text">HTML content</span>
+            <RichTextEditor value={form.html} onChange={(html) => setForm((f) => ({ ...f, html }))} />
           </div>
-          <div className="flex flex-col gap-2">
-            {form.links.map((link, index) => (
-              <div key={index} className="flex items-end gap-2">
-                <Input
-                  className="flex-1"
-                  placeholder="Label"
-                  value={link.label}
-                  onChange={(e) => updateLink(index, { label: e.target.value })}
-                />
-                <Input
-                  className="flex-1"
-                  placeholder="URL"
-                  value={link.url}
-                  onChange={(e) => updateLink(index, { url: e.target.value })}
-                />
-                <Button variant="ghost" size="sm" onClick={() => removeLink(index)}>
-                  ✕
-                </Button>
-              </div>
-            ))}
+        ) : (
+          <div className="border-t border-border pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-medium text-text">Links</span>
+              <Button variant="secondary" size="sm" onClick={addLink}>
+                Add link
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {form.links.map((link, index) => (
+                <div key={index} className="flex items-end gap-2">
+                  <Input
+                    className="flex-1"
+                    placeholder="Label"
+                    value={link.label}
+                    onChange={(e) => updateLink(index, { label: e.target.value })}
+                  />
+                  <Input
+                    className="flex-1"
+                    placeholder="URL"
+                    value={link.url}
+                    onChange={(e) => updateLink(index, { url: e.target.value })}
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => removeLink(index)}>
+                    ✕
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Modal>
   );

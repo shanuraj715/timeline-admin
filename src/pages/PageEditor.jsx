@@ -6,12 +6,14 @@ import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input, Textarea, Select } from "../components/ui/Input";
 import { RichTextEditor } from "../components/ui/RichTextEditor";
+import { Switch } from "../components/ui/Switch";
 import { useToast } from "../context/ToastContext";
 
 const EMPTY_PAGE = {
   title: "",
   slug: "",
   content: "",
+  showTitle: true,
   status: "draft",
   seoTitle: "",
   seoDescription: "",
@@ -104,6 +106,13 @@ export default function PageEditor() {
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </Select>
+            <label className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
+              <span className="text-sm text-text">Show page title on frontend</span>
+              <Switch
+                checked={form.showTitle ?? true}
+                onChange={(showTitle) => setForm({ ...form, showTitle })}
+              />
+            </label>
             <Input
               label="SEO title"
               value={form.seoTitle}
