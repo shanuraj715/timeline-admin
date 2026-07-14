@@ -15,6 +15,7 @@ import PaymentGateways from "./pages/PaymentGateways";
 import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
 import FeatureFlags from "./pages/FeatureFlags";
+import Themes from "./pages/Themes";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -42,6 +43,7 @@ export default function App() {
                   <Route path="pages" element={<PagesList />} />
                   <Route path="pages/new" element={<PageEditor />} />
                   <Route path="pages/:id" element={<PageEditor />} />
+                  <Route path="themes" element={<Themes />} />
                   <Route path="pricing" element={<Pricing />} />
                   <Route path="payment-gateways" element={<PaymentGateways />} />
                   <Route path="orders" element={<Orders />} />

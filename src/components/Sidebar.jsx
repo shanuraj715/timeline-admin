@@ -11,6 +11,7 @@ const NAV_GROUPS = [
       { to: "/navigation", label: "Navigation" },
       { to: "/footer", label: "Footer" },
       { to: "/pages", label: "Pages" },
+      { to: "/themes", label: "Themes" },
     ],
   },
   {
