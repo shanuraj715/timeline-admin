@@ -170,6 +170,17 @@ a {
   color: var(--primary);
 }
 
+/* Scrollable regions (table wrappers etc.) stay scrollable via trackpad/
+   drag/shift+wheel — just without the visible scrollbar chrome cluttering
+   an otherwise clean admin table. */
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 /* TipTap editor content (RichTextEditor) — not a CSS module since the
    editor renders its own DOM structure the class names must match exactly. */
 .rich-text-content .ProseMirror {

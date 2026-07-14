@@ -1,6 +1,6 @@
 export function Table({ children, className = "" }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="scrollbar-hidden overflow-x-auto">
       <table className={`w-full border-collapse text-sm ${className}`}>{children}</table>
     </div>
   );
