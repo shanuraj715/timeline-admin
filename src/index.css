@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Runtime light/dark via a [data-theme] attribute on <html> (same
    convention as the main Timeline app), not just prefers-color-scheme,

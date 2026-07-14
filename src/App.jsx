@@ -6,6 +6,10 @@ import { ToastProvider } from "./context/ToastContext";
 import { RequireAuth } from "./components/RequireAuth";
 import { Layout } from "./components/Layout";
 import Login from "./pages/Login";
+import Navigation from "./pages/Navigation";
+import Footer from "./pages/Footer";
+import PagesList from "./pages/PagesList";
+import PageEditor from "./pages/PageEditor";
 import { Placeholder } from "./pages/Placeholder";
 
 const queryClient = new QueryClient({
@@ -29,9 +33,11 @@ export default function App() {
                   }
                 >
                   <Route index element={<Placeholder title="Dashboard" />} />
-                  <Route path="navigation" element={<Placeholder title="Navigation" />} />
-                  <Route path="footer" element={<Placeholder title="Footer" />} />
-                  <Route path="pages" element={<Placeholder title="Pages" />} />
+                  <Route path="navigation" element={<Navigation />} />
+                  <Route path="footer" element={<Footer />} />
+                  <Route path="pages" element={<PagesList />} />
+                  <Route path="pages/new" element={<PageEditor />} />
+                  <Route path="pages/:id" element={<PageEditor />} />
                   <Route path="pricing" element={<Placeholder title="Pricing plans" />} />
                   <Route path="payment-gateways" element={<Placeholder title="Payment gateways" />} />
                   <Route path="orders" element={<Placeholder title="Orders" />} />
