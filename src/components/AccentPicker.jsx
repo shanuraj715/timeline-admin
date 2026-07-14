@@ -12,11 +12,17 @@ const SWATCH_COLOR = {
   pink: "#db2777",
 };
 
-export function AccentPicker() {
+const SIZE_CLASSES = {
+  sm: "h-5 w-5",
+  lg: "h-8 w-8",
+};
+
+export function AccentPicker({ size = "sm" }) {
   const { accent, setAccent } = useTheme();
+  const dimension = SIZE_CLASSES[size] || SIZE_CLASSES.sm;
 
   return (
-    <div className="flex items-center gap-1.5" role="group" aria-label="Accent color">
+    <div className="flex items-center gap-2" role="group" aria-label="Accent color">
       {ACCENTS.map((key) => (
         <button
           key={key}
@@ -25,7 +31,7 @@ export function AccentPicker() {
           aria-label={`${key} accent`}
           aria-pressed={accent === key}
           title={`${key.charAt(0).toUpperCase()}${key.slice(1)} accent`}
-          className={`h-5 w-5 shrink-0 rounded-full transition-transform ${
+          className={`${dimension} shrink-0 rounded-full transition-transform ${
             accent === key ? "scale-110 ring-2 ring-offset-2 ring-offset-surface" : "hover:scale-110"
           }`}
           style={{

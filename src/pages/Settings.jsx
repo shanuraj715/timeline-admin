@@ -4,6 +4,7 @@ import { fetchPlatformSettings, updatePlatformSettings } from "../api/settings";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { AccentPicker } from "../components/AccentPicker";
 import { useToast } from "../context/ToastContext";
 
 const BYTES_PER_MB = 1024 * 1024;
@@ -43,11 +44,17 @@ export default function Settings() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-lg font-semibold text-text">Free tier limits</h1>
-        <p className="text-sm text-text-muted">
-          Controls how much a new timeline gets for free before its owner needs credits.
-        </p>
+        <h1 className="text-lg font-semibold text-text">Settings</h1>
+        <p className="text-sm text-text-muted">Platform limits and how the admin panel looks.</p>
       </div>
+
+      <Card>
+        <CardHeader title="Appearance" description="Only affects this admin panel, on this device." />
+        <CardBody>
+          <span className="mb-2 block text-sm font-medium text-text">Accent color</span>
+          <AccentPicker size="lg" />
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader

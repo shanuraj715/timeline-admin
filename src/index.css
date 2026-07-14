@@ -42,11 +42,39 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d10;
+    --surface: #14171c;
+    --surface-hover: #1b1f26;
+    --border: #262b33;
+    --text: #e7e9ec;
+    --text-muted: #8b93a1;
+    --primary: #3b9eff;
+    --primary-hover: #62b1ff;
+    --primary-fg: #08101c;
+    --success: #22c55e;
+    --success-bg: #0f2317;
+    --danger: #f87171;
+    --danger-bg: #2a1414;
+    --warning: #f59e0b;
+    --warning-bg: #2a2011;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+}
+
 /* Accent color picker — overrides only --primary/--primary-hover/--primary-fg
    on top of whatever light/dark block already applied above; every other
    token (surfaces, borders, text) stays the same regardless of accent.
    "blue" is the default and has no override block (it's just the base
-   --primary values already set above). */
+   --primary values already set above). Placed AFTER the prefers-color-scheme
+   block above: that block's `:root:not([data-theme="light"]) { --primary:
+   ... }` has the same specificity as `[data-theme="dark"][data-accent="x"]`
+   below (0,2,0 either way), and — critically — it also matches
+   `<html data-theme="dark">` regardless of data-accent (data-theme="dark" is
+   not data-theme="light", so :not() is satisfied). With equal specificity,
+   whichever rule is later in the file wins, so these must come last or an
+   OS set to dark mode silently reverts every accent back to blue. */
 [data-theme="light"][data-accent="red"] {
   --primary: #dc2626;
   --primary-hover: #b91c1c;
@@ -100,27 +128,6 @@
   --primary: #f472b6;
   --primary-hover: #f9a8d4;
   --primary-fg: #2a0f1c;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0b0d10;
-    --surface: #14171c;
-    --surface-hover: #1b1f26;
-    --border: #262b33;
-    --text: #e7e9ec;
-    --text-muted: #8b93a1;
-    --primary: #3b9eff;
-    --primary-hover: #62b1ff;
-    --primary-fg: #08101c;
-    --success: #22c55e;
-    --success-bg: #0f2317;
-    --danger: #f87171;
-    --danger-bg: #2a1414;
-    --warning: #f59e0b;
-    --warning-bg: #2a2011;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
-  }
 }
 
 @theme {
