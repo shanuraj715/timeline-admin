@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Star, Pencil, Trash2 } from "lucide-react";
+import { Plus, Star, Pencil, Trash2, Palette, Image as ImageIcon, SlidersHorizontal, Waypoints, X, Eye } from "lucide-react";
 import { fetchThemes, createTheme, updateTheme, deleteTheme, setDefaultTheme, uploadThemeImage } from "../api/themes";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
@@ -184,6 +184,134 @@ export default function Themes() {
   );
 }
 
+function SectionHeader({ icon, title, description }) {
+  const Icon = icon;
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon size={15} />
+      </span>
+      <div>
+        <p className="text-sm font-semibold text-text">{title}</p>
+        {description && <p className="mt-0.5 text-xs text-text-muted">{description}</p>}
+      </div>
+    </div>
+  );
+}
+
+// Swatch (opens the native picker) + a hex text field side by side, instead
+// of a bare <input type="color"> — browsers render those wildly
+// inconsistently (a huge flat rectangle in some, a tiny swatch with no hex
+// value visible in others) and there's no way to type an exact hex code.
+// `allowClear` renders a checkerboard "not set" state and a clear button —
+// used for the optional node/edge/date-chip fields, where empty means
+// "inherit the app's default" rather than "black".
+function ColorField({ label, value, onChange, allowClear = false }) {
+  const inputRef = useRef(null);
+  const hasValue = Boolean(value);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-text-muted">{label}</span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          aria-label={`Pick ${label}`}
+          className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border"
+          style={
+            hasValue
+              ? { background: value }
+              : {
+                  backgroundImage:
+                    "linear-gradient(45deg, var(--border) 25%, transparent 25%), linear-gradient(-45deg, var(--border) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--border) 75%), linear-gradient(-45deg, transparent 75%, var(--border) 75%)",
+                  backgroundSize: "8px 8px",
+                  backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0px",
+                }
+          }
+        >
+          <input
+            ref={inputRef}
+            type="color"
+            value={hasValue ? value : "#000000"}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        </button>
+        <input
+          type="text"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={allowClear ? "Not set" : "#000000"}
+          className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 font-mono text-sm text-text placeholder:text-text-muted focus:outline-2 focus:outline-primary"
+        />
+        {allowClear && hasValue && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            aria-label={`Clear ${label}`}
+            className="shrink-0 rounded-md p-1.5 text-text-muted hover:bg-surface-hover hover:text-text"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Mirrors timeline/src/app/timeline/[slug]/page.module.scss's .themeWash and
+// timeline/src/components/timeline/day-node.module.scss exactly (same
+// gradient angle, color-mix percentages, opacity math, chip padding/font,
+// node/edge sizing) — this is a from-scratch reimplementation, not shared
+// code (separate app, no shared package), so if either changes the other
+// needs updating by hand to keep the preview honest.
+function ThemePreview({ form }) {
+  const opacity = (form.overlayOpacity ?? 60) / 100;
+  const overlayStyle = form.overlayStyle || "gradient";
+  const primary = form.colors.primary || "#0a84ff";
+  const secondary = form.colors.secondary || "#6e6e73";
+
+  const overlayBackground =
+    overlayStyle === "solid"
+      ? primary
+      : `linear-gradient(165deg, color-mix(in srgb, ${primary} 60%, black 15%) 0%, color-mix(in srgb, ${secondary} 65%, black 35%) 100%)`;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div
+        className="relative flex h-32 items-end p-3"
+        style={{
+          backgroundImage: form.imageUrl ? `url(${form.imageUrl})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: form.imagePosition || "center",
+          backgroundColor: primary,
+        }}
+      >
+        {overlayStyle !== "none" && (
+          <div className="absolute inset-0" style={{ background: overlayBackground, opacity }} />
+        )}
+        <span
+          className="relative rounded-full px-2.5 py-[3px] text-[11px] font-semibold shadow"
+          style={{
+            color: form.colors.dateChipText || "#f5f5f7",
+            background: form.colors.dateChipBackground || "rgba(20, 20, 20, 0.55)",
+          }}
+        >
+          14 Jul 2026
+        </span>
+      </div>
+      <div className="flex items-center gap-3 border-t border-border bg-surface px-4 py-3">
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: form.colors.node || "var(--primary)" }} />
+        <span className="h-px flex-1" style={{ background: form.colors.edge || "var(--border)" }} />
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: form.colors.node || "var(--primary)" }} />
+        <span className="h-px flex-1" style={{ background: form.colors.edge || "var(--border)" }} />
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: form.colors.node || "var(--primary)" }} />
+      </div>
+    </div>
+  );
+}
+
 function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
   const [form, setForm] = useState({ ...theme, colors: { ...theme.colors } });
   const [slugTouched, setSlugTouched] = useState(Boolean(theme.id));
@@ -221,7 +349,7 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
       open
       onClose={onClose}
       title={theme.id ? "Edit theme" : "Add theme"}
-      width="560px"
+      width="640px"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -233,62 +361,68 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
         </>
       }
     >
-      <div className="flex flex-col gap-4">
-        <Input label="Name" value={form.name} onChange={handleNameChange} />
-        <Input
-          label="Slug"
-          value={form.slug}
-          onChange={(e) => {
-            setSlugTouched(true);
-            setForm({ ...form, slug: e.target.value });
-          }}
-        />
-        <Input
-          label="Category"
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          placeholder="mountain, birthday, ocean…"
-        />
-        <Textarea
-          label="Description"
-          rows={2}
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <SectionHeader
+            icon={Eye}
+            title="Preview"
+            description="Matches how this theme renders on an actual timeline — updates live as you edit."
+          />
+          <ThemePreview form={form} />
+        </div>
 
-        <div>
-          <span className="mb-1.5 block text-sm font-medium text-text">Colors</span>
-          <div className="grid grid-cols-3 gap-3">
-            {["primary", "secondary", "background"].map((key) => (
-              <label key={key} className="flex flex-col items-center gap-1">
-                <input
-                  type="color"
-                  value={form.colors[key]}
-                  onChange={(e) => setColor(key, e.target.value)}
-                  className="h-9 w-full cursor-pointer rounded border border-border bg-transparent"
-                />
-                <span className="text-xs capitalize text-text-muted">{key}</span>
-              </label>
-            ))}
+        <div className="flex flex-col gap-4 border-t border-border pt-5">
+          <Input label="Name" value={form.name} onChange={handleNameChange} />
+          <Input
+            label="Slug"
+            value={form.slug}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setForm({ ...form, slug: e.target.value });
+            }}
+          />
+          <Input
+            label="Category"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            placeholder="mountain, birthday, ocean…"
+          />
+          <Textarea
+            label="Description"
+            rows={2}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Price (credits)"
+              type="number"
+              min={0}
+              value={form.priceCredits}
+              onChange={(e) => setForm({ ...form, priceCredits: Number(e.target.value) })}
+            />
+            <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </Select>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Price (credits)"
-            type="number"
-            min={0}
-            value={form.priceCredits}
-            onChange={(e) => setForm({ ...form, priceCredits: Number(e.target.value) })}
-          />
-          <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </Select>
+        <div className="flex flex-col gap-3 border-t border-border pt-5">
+          <SectionHeader icon={Palette} title="Colors" description="The theme's core palette." />
+          <div className="grid grid-cols-3 gap-3">
+            <ColorField label="Primary" value={form.colors.primary} onChange={(v) => setColor("primary", v)} />
+            <ColorField label="Secondary" value={form.colors.secondary} onChange={(v) => setColor("secondary", v)} />
+            <ColorField
+              label="Background"
+              value={form.colors.background}
+              onChange={(v) => setColor("background", v)}
+            />
+          </div>
         </div>
 
-        <div className="border-t border-border pt-4">
-          <span className="mb-1.5 block text-sm font-medium text-text">Background image</span>
+        <div className="flex flex-col gap-3 border-t border-border pt-5">
+          <SectionHeader icon={ImageIcon} title="Background image" />
           {theme.id ? (
             <div className="flex items-center gap-3">
               {form.imageUrl && (
@@ -312,8 +446,8 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
           )}
         </div>
 
-        <div className="border-t border-border pt-4">
-          <span className="mb-2 block text-sm font-medium text-text">How the wash renders</span>
+        <div className="flex flex-col gap-4 border-t border-border pt-5">
+          <SectionHeader icon={SlidersHorizontal} title="How the wash renders" />
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Image position"
@@ -335,7 +469,7 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
             </Select>
           </div>
           {form.overlayStyle !== "none" && (
-            <div className="mt-4">
+            <div>
               <label className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
                 Overlay opacity
                 <span className="text-text-muted">{form.overlayOpacity}%</span>
@@ -352,40 +486,37 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
           )}
         </div>
 
-        <div className="border-t border-border pt-4">
-          <span className="mb-1.5 block text-sm font-medium text-text">Timeline line &amp; date colors</span>
-          <p className="mb-3 text-xs text-text-muted">
-            Optional — leave unset to use the app's default styling for the timeline's connector line, dots, and
-            date labels.
-          </p>
+        <div className="flex flex-col gap-3 border-t border-border pt-5">
+          <SectionHeader
+            icon={Waypoints}
+            title="Timeline line & date colors"
+            description="Optional — leave unset to use the app's default styling for the connector line, dots, and date labels."
+          />
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { key: "node", label: "Node (dot) color" },
-              { key: "edge", label: "Edge (line) color" },
-              { key: "dateChipBackground", label: "Date chip background" },
-              { key: "dateChipText", label: "Date chip text" },
-            ].map(({ key, label }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <span className="text-xs text-text-muted">{label}</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={form.colors[key] || "#000000"}
-                    onChange={(e) => setColor(key, e.target.value)}
-                    className="h-9 w-full cursor-pointer rounded border border-border bg-transparent"
-                  />
-                  {form.colors[key] && (
-                    <button
-                      type="button"
-                      onClick={() => setColor(key, "")}
-                      className="shrink-0 text-xs text-text-muted hover:text-text"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+            <ColorField
+              label="Node (dot) color"
+              value={form.colors.node}
+              onChange={(v) => setColor("node", v)}
+              allowClear
+            />
+            <ColorField
+              label="Edge (line) color"
+              value={form.colors.edge}
+              onChange={(v) => setColor("edge", v)}
+              allowClear
+            />
+            <ColorField
+              label="Date chip background"
+              value={form.colors.dateChipBackground}
+              onChange={(v) => setColor("dateChipBackground", v)}
+              allowClear
+            />
+            <ColorField
+              label="Date chip text"
+              value={form.colors.dateChipText}
+              onChange={(v) => setColor("dateChipText", v)}
+              allowClear
+            />
           </div>
         </div>
       </div>
