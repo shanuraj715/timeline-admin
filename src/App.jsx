@@ -13,7 +13,8 @@ import PageEditor from "./pages/PageEditor";
 import Pricing from "./pages/Pricing";
 import PaymentGateways from "./pages/PaymentGateways";
 import Orders from "./pages/Orders";
-import { Placeholder } from "./pages/Placeholder";
+import Dashboard from "./pages/Dashboard";
+import FeatureFlags from "./pages/FeatureFlags";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -35,7 +36,7 @@ export default function App() {
                     </RequireAuth>
                   }
                 >
-                  <Route index element={<Placeholder title="Dashboard" />} />
+                  <Route index element={<Dashboard />} />
                   <Route path="navigation" element={<Navigation />} />
                   <Route path="footer" element={<Footer />} />
                   <Route path="pages" element={<PagesList />} />
@@ -44,7 +45,7 @@ export default function App() {
                   <Route path="pricing" element={<Pricing />} />
                   <Route path="payment-gateways" element={<PaymentGateways />} />
                   <Route path="orders" element={<Orders />} />
-                  <Route path="feature-flags" element={<Placeholder title="Feature flags" />} />
+                  <Route path="feature-flags" element={<FeatureFlags />} />
                 </Route>
               </Routes>
             </BrowserRouter>
