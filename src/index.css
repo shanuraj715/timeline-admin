@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 /* Runtime light/dark via a [data-theme] attribute on <html> (same
    convention as the main Timeline app), not just prefers-color-scheme,
@@ -102,4 +101,77 @@ body {
 
 a {
   color: var(--primary);
+}
+
+/* TipTap editor content (RichTextEditor) — not a CSS module since the
+   editor renders its own DOM structure the class names must match exactly. */
+.rich-text-content .ProseMirror {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.rich-text-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.rich-text-content .ProseMirror h1,
+.rich-text-content .ProseMirror h2,
+.rich-text-content .ProseMirror h3 {
+  font-weight: 600;
+  margin: 20px 0 8px;
+  line-height: 1.3;
+}
+
+.rich-text-content .ProseMirror h1 {
+  font-size: 26px;
+}
+
+.rich-text-content .ProseMirror h2 {
+  font-size: 21px;
+}
+
+.rich-text-content .ProseMirror h3 {
+  font-size: 17px;
+}
+
+.rich-text-content .ProseMirror p {
+  margin: 8px 0;
+}
+
+.rich-text-content .ProseMirror ul,
+.rich-text-content .ProseMirror ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.rich-text-content .ProseMirror li {
+  margin: 2px 0;
+}
+
+.rich-text-content .ProseMirror a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.rich-text-content .ProseMirror blockquote {
+  margin: 8px 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+
+.rich-text-content .ProseMirror strong {
+  font-weight: 600;
+}
+
+.rich-text-content .ProseMirror code {
+  background: var(--surface-hover);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 13px;
 }

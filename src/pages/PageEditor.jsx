@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
 import { fetchPage, createPage, updatePage } from "../api/cms";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input, Textarea, Select } from "../components/ui/Input";
+import { RichTextEditor } from "../components/ui/RichTextEditor";
 import { useToast } from "../context/ToastContext";
 
 const EMPTY_PAGE = {
@@ -68,7 +68,7 @@ export default function PageEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-text">{isNew ? "New page" : "Edit page"}</h1>
-          <p className="text-sm text-text-muted">Content is written in Markdown.</p>
+          <p className="text-sm text-text-muted">Format content with the toolbar below.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate("/pages")}>
@@ -118,23 +118,10 @@ export default function PageEditor() {
           </CardBody>
         </Card>
 
-        <Card className="lg:col-span-1">
-          <CardHeader title="Content (Markdown)" />
+        <Card className="lg:col-span-2">
+          <CardHeader title="Content" />
           <CardBody>
-            <Textarea
-              rows={20}
-              className="font-mono text-sm"
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="# Heading&#10;&#10;Write your page content here…"
-            />
-          </CardBody>
-        </Card>
-
-        <Card className="lg:col-span-1">
-          <CardHeader title="Preview" />
-          <CardBody className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{form.content || "*Nothing to preview yet.*"}</ReactMarkdown>
+            <RichTextEditor value={form.content} onChange={(html) => setForm((f) => ({ ...f, content: html }))} />
           </CardBody>
         </Card>
       </div>
