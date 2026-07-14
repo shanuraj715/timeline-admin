@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { GalleryHorizontalEnd } from "lucide-react";
 import { fetchUsers, adjustUserCredits } from "../api/users";
-import { runUserAction } from "../api/admin";
+import { runUserAction, fetchUserTimelines } from "../api/admin";
 import { Card } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Input, Textarea } from "../components/ui/Input";
@@ -10,11 +11,23 @@ import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { useToast } from "../context/ToastContext";
 
+const BYTES_PER_MB = 1024 * 1024;
+
+function formatBytes(bytes) {
+  const mb = bytes / BYTES_PER_MB;
+  return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(0)} MB`;
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function Users() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [q, setQ] = useState("");
   const [adjustTarget, setAdjustTarget] = useState(null);
+  const [timelinesTarget, setTimelinesTarget] = useState(null);
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users", q],
     queryFn: () => fetchUsers(q),
@@ -83,13 +96,8 @@ export default function Users() {
                           Unlock
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => actionMutation.mutate({ id: u.id, action: u.role === "superadmin" ? "demote" : "promote" })}
-                        disabled={actionMutation.isPending}
-                      >
-                        {u.role === "superadmin" ? "Demote" : "Promote"}
+                      <Button variant="secondary" size="sm" onClick={() => setTimelinesTarget(u)}>
+                        <GalleryHorizontalEnd size={14} /> Timelines
                       </Button>
                       <Button variant="secondary" size="sm" onClick={() => setAdjustTarget(u)}>
                         Adjust credits
@@ -104,6 +112,7 @@ export default function Users() {
       </Card>
 
       {adjustTarget && <AdjustCreditsModal user={adjustTarget} onClose={() => setAdjustTarget(null)} />}
+      {timelinesTarget && <UserTimelinesModal user={timelinesTarget} onClose={() => setTimelinesTarget(null)} />}
     </div>
   );
 }
@@ -162,6 +171,66 @@ function AdjustCreditsModal({ user, onClose }) {
           onChange={(e) => setReason(e.target.value)}
         />
       </div>
+    </Modal>
+  );
+}
+
+// Deliberately shows no timeline title/slug and no media/asset previews —
+// see the /users/:id/timelines route's own comment. Just enough to answer
+// "how many timelines, how big, how active" for support/moderation.
+function UserTimelinesModal({ user, onClose }) {
+  const { data: timelines = [], isLoading } = useQuery({
+    queryKey: ["admin-user-timelines", user.id],
+    queryFn: () => fetchUserTimelines(user.id),
+  });
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Timelines — ${user.name}`}
+      width="640px"
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
+      {isLoading ? (
+        <p className="text-sm text-text-muted">Loading…</p>
+      ) : timelines.length === 0 ? (
+        <p className="text-sm text-text-muted">This user isn't a member of any timeline.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-text-muted">
+            Names and content are hidden here by design — this is metadata only.
+          </p>
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Role</Th>
+                <Th>Members</Th>
+                <Th>Media</Th>
+                <Th>Storage</Th>
+                <Th>Created</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {timelines.map((t) => (
+                <Tr key={t.id}>
+                  <Td className="capitalize">{t.role}</Td>
+                  <Td>{t.memberCount}</Td>
+                  <Td>{t.mediaCount}</Td>
+                  <Td className="text-text-muted">
+                    {formatBytes(t.usedBytes)} / {formatBytes(t.quotaBytes)}
+                  </Td>
+                  <Td className="text-text-muted">{formatDate(t.createdAt)}</Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </div>
+      )}
     </Modal>
   );
 }
