@@ -17,12 +17,16 @@ export default function Settings() {
   const [freeStorageMb, setFreeStorageMb] = useState("");
   const [freeTimelines, setFreeTimelines] = useState("");
   const [creditsPerExtraTimeline, setCreditsPerExtraTimeline] = useState("");
+  const [storageUnitMb, setStorageUnitMb] = useState("");
+  const [storageUnitPriceCredits, setStorageUnitPriceCredits] = useState("");
 
   useEffect(() => {
     if (!settings) return;
     setFreeStorageMb(String(Math.round(settings.freeStorageBytesPerTimeline / BYTES_PER_MB)));
     setFreeTimelines(String(settings.freeTimelinesPerAccount));
     setCreditsPerExtraTimeline(String(settings.creditsPerExtraTimeline));
+    setStorageUnitMb(String(Math.round(settings.storageUnitBytes / BYTES_PER_MB)));
+    setStorageUnitPriceCredits(String(settings.storageUnitPriceCredits));
   }, [settings]);
 
   const saveMutation = useMutation({
@@ -31,6 +35,8 @@ export default function Settings() {
         freeStorageBytesPerTimeline: Math.round(Number(freeStorageMb) * BYTES_PER_MB),
         freeTimelinesPerAccount: Number(freeTimelines),
         creditsPerExtraTimeline: Number(creditsPerExtraTimeline),
+        storageUnitBytes: Math.round(Number(storageUnitMb) * BYTES_PER_MB),
+        storageUnitPriceCredits: Number(storageUnitPriceCredits),
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(["platform-settings"], updated);
@@ -58,8 +64,8 @@ export default function Settings() {
 
       <Card>
         <CardHeader
-          title="Storage & timeline limits"
-          description="These apply to newly created timelines and accounts — existing ones keep whatever quota they already have."
+          title="Free tier limits"
+          description="Free storage applies live to every timeline, including existing ones — raising it here benefits everyone immediately. The timeline-count limit only affects timelines created from now on."
         />
         <CardBody className="flex flex-col gap-4">
           <Input
@@ -83,11 +89,35 @@ export default function Settings() {
             value={creditsPerExtraTimeline}
             onChange={(e) => setCreditsPerExtraTimeline(e.target.value)}
           />
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="self-start"
-          >
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="self-start">
+            Save
+          </Button>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Storage pricing"
+          description="A timeline can buy extra storage in whole multiples of this amount — e.g. 100MB at 10 credits means 300MB costs 30 credits, and 150MB is rejected outright."
+        />
+        <CardBody className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Unit size (MB)"
+              type="number"
+              min={1}
+              value={storageUnitMb}
+              onChange={(e) => setStorageUnitMb(e.target.value)}
+            />
+            <Input
+              label="Price per unit (credits)"
+              type="number"
+              min={1}
+              value={storageUnitPriceCredits}
+              onChange={(e) => setStorageUnitPriceCredits(e.target.value)}
+            />
+          </div>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="self-start">
             Save
           </Button>
         </CardBody>
