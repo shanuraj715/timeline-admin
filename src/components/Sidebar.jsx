@@ -24,7 +24,12 @@ const NAV_GROUPS = [
   },
   {
     label: "Platform",
-    items: [{ to: "/feature-flags", label: "Feature flags" }],
+    items: [
+      { to: "/users", label: "Users" },
+      { to: "/timelines", label: "Timelines" },
+      { to: "/security-log", label: "Security log" },
+      { to: "/feature-flags", label: "Feature flags" },
+    ],
   },
 ];
 

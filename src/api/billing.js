@@ -15,3 +15,4 @@ export const deleteGateway = (provider) => apiFetch(`/api/payments/gateways/${pr
 
 // ---- Orders (admin view: all orders, via analytics' recent-orders) ----
 export const fetchRecentOrders = (limit = 50) => apiFetch(`/api/analytics/recent-orders?limit=${limit}`).then((d) => d.orders);
+export const refundOrder = (id) => apiFetch(`/api/payments/orders/${id}/refund`, { method: "POST" });

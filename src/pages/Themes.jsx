@@ -14,7 +14,18 @@ const EMPTY_THEME = {
   slug: "",
   category: "",
   description: "",
-  colors: { primary: "#0a84ff", secondary: "#6e6e73", background: "#fbfbfd" },
+  colors: {
+    primary: "#0a84ff",
+    secondary: "#6e6e73",
+    background: "#fbfbfd",
+    node: "",
+    edge: "",
+    dateChipBackground: "",
+    dateChipText: "",
+  },
+  imagePosition: "center",
+  overlayStyle: "gradient",
+  overlayOpacity: 60,
   priceCredits: 0,
   status: "draft",
 };
@@ -297,6 +308,83 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
           ) : (
             <p className="text-sm text-text-muted">Save the theme first, then you can upload a background image.</p>
           )}
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <span className="mb-2 block text-sm font-medium text-text">How the wash renders</span>
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Image position"
+              value={form.imagePosition}
+              onChange={(e) => setForm({ ...form, imagePosition: e.target.value })}
+            >
+              <option value="center">Center</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+            </Select>
+            <Select
+              label="Overlay style"
+              value={form.overlayStyle}
+              onChange={(e) => setForm({ ...form, overlayStyle: e.target.value })}
+            >
+              <option value="gradient">Gradient (primary → secondary)</option>
+              <option value="solid">Solid (primary only)</option>
+              <option value="none">None (raw image)</option>
+            </Select>
+          </div>
+          {form.overlayStyle !== "none" && (
+            <div className="mt-4">
+              <label className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
+                Overlay opacity
+                <span className="text-text-muted">{form.overlayOpacity}%</span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={form.overlayOpacity}
+                onChange={(e) => setForm({ ...form, overlayOpacity: Number(e.target.value) })}
+                className="w-full accent-primary"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <span className="mb-1.5 block text-sm font-medium text-text">Timeline line &amp; date colors</span>
+          <p className="mb-3 text-xs text-text-muted">
+            Optional — leave unset to use the app's default styling for the timeline's connector line, dots, and
+            date labels.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { key: "node", label: "Node (dot) color" },
+              { key: "edge", label: "Edge (line) color" },
+              { key: "dateChipBackground", label: "Date chip background" },
+              { key: "dateChipText", label: "Date chip text" },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex flex-col gap-1">
+                <span className="text-xs text-text-muted">{label}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={form.colors[key] || "#000000"}
+                    onChange={(e) => setColor(key, e.target.value)}
+                    className="h-9 w-full cursor-pointer rounded border border-border bg-transparent"
+                  />
+                  {form.colors[key] && (
+                    <button
+                      type="button"
+                      onClick={() => setColor(key, "")}
+                      className="shrink-0 text-xs text-text-muted hover:text-text"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </Modal>

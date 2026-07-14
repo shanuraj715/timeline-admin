@@ -16,6 +16,9 @@ import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
 import FeatureFlags from "./pages/FeatureFlags";
 import Themes from "./pages/Themes";
+import Users from "./pages/Users";
+import Timelines from "./pages/Timelines";
+import SecurityLog from "./pages/SecurityLog";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -47,6 +50,9 @@ export default function App() {
                   <Route path="pricing" element={<Pricing />} />
                   <Route path="payment-gateways" element={<PaymentGateways />} />
                   <Route path="orders" element={<Orders />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="timelines" element={<Timelines />} />
+                  <Route path="security-log" element={<SecurityLog />} />
                   <Route path="feature-flags" element={<FeatureFlags />} />
                 </Route>
               </Routes>

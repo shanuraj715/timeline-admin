@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { GripVertical } from "lucide-react";
 import {
   fetchFooterColumns,
   createFooterColumn,
@@ -25,6 +26,8 @@ export default function Footer() {
 
   const [modalColumn, setModalColumn] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["footer"] });
@@ -68,6 +71,20 @@ export default function Footer() {
     invalidate();
   }
 
+  async function handleDrop(dropIndex) {
+    setDragOverIndex(null);
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null);
+      return;
+    }
+    const reordered = [...columns];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(dropIndex, 0, moved);
+    setDragIndex(null);
+    await reorderFooterColumns(reordered.map((c, i) => ({ id: c._id, order: i })));
+    invalidate();
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -89,9 +106,29 @@ export default function Footer() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {columns.map((col, index) => (
-            <Card key={col._id} className="flex flex-col">
+            <Card
+              key={col._id}
+              draggable
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverIndex(index);
+              }}
+              onDragLeave={() => setDragOverIndex((cur) => (cur === index ? null : cur))}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setDragOverIndex(null);
+              }}
+              className={`flex flex-col transition-opacity ${dragIndex === index ? "opacity-40" : ""} ${
+                dragOverIndex === index && dragIndex !== index ? "ring-2 ring-primary" : ""
+              }`}
+            >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="font-medium text-text">{col.title}</span>
+                <span className="flex items-center gap-2 font-medium text-text">
+                  <GripVertical size={16} className="cursor-grab text-text-muted" />
+                  {col.title}
+                </span>
                 <Switch checked={col.enabled} onChange={(enabled) => toggleMutation.mutate({ id: col._id, enabled })} />
               </div>
               <CardBody className="flex-1">
