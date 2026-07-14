@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { fetchPlans, createPlan, updatePlan, deletePlan } from "../api/billing";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Input, Textarea, Checkbox } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Badge } from "../components/ui/Badge";
@@ -109,12 +110,8 @@ export default function Pricing() {
                   </Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => setModalPlan(plan)}>
-                        Edit
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(plan)}>
-                        Delete
-                      </Button>
+                      <IconButton label="Edit plan" icon={Pencil} onClick={() => setModalPlan(plan)} />
+                      <IconButton label="Delete plan" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(plan)} />
                     </div>
                   </Td>
                 </Tr>

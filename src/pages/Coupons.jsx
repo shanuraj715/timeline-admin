@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { fetchCoupons, createCoupon, updateCoupon, deleteCoupon } from "../api/coupons";
 import { fetchPlans } from "../api/billing";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Input, Select, Checkbox } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
 import { Switch } from "../components/ui/Switch";
@@ -132,9 +133,9 @@ export default function Coupons() {
                   </Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
+                      <IconButton
+                        label="Edit coupon"
+                        icon={Pencil}
                         onClick={() =>
                           setModalCoupon({
                             ...coupon,
@@ -142,12 +143,8 @@ export default function Coupons() {
                             maxRedemptions: coupon.maxRedemptions ?? "",
                           })
                         }
-                      >
-                        Edit
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(coupon)}>
-                        Delete
-                      </Button>
+                      />
+                      <IconButton label="Delete coupon" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(coupon)} />
                     </div>
                   </Td>
                 </Tr>

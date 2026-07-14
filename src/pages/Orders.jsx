@@ -1,14 +1,19 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchRecentOrders, refundOrder } from "../api/billing";
+import { Undo2 } from "lucide-react";
+import { fetchAdminOrders } from "../api/admin";
+import { refundOrder } from "../api/billing";
 import { Card } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
+import { Pagination } from "../components/ui/Pagination";
 import { Select } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Modal } from "../components/ui/Modal";
 import { useToast } from "../context/ToastContext";
 
+const LIMIT = 20;
 const STATUS_TONE = { paid: "success", created: "neutral", failed: "danger", cancelled: "warning", refunded: "warning" };
 
 function formatPrice(paise, currency) {
@@ -18,22 +23,20 @@ function formatPrice(paise, currency) {
 export default function Orders() {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ["orders"],
-    queryFn: () => fetchRecentOrders(200),
-  });
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const [refundTarget, setRefundTarget] = useState(null);
 
-  const filtered = useMemo(
-    () => (statusFilter === "all" ? orders : orders.filter((o) => o.status === statusFilter)),
-    [orders, statusFilter]
-  );
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-orders", statusFilter, page],
+    queryFn: () => fetchAdminOrders({ page, limit: LIMIT, status: statusFilter }),
+  });
+  const orders = data?.orders || [];
 
   const refundMutation = useMutation({
     mutationFn: (id) => refundOrder(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       setRefundTarget(null);
       toast("Order refunded", "success");
     },
@@ -47,7 +50,14 @@ export default function Orders() {
           <h1 className="text-lg font-semibold text-text">Orders</h1>
           <p className="text-sm text-text-muted">Credit purchase transactions across all users.</p>
         </div>
-        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40">
+        <Select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
+          className="w-40"
+        >
           <option value="all">All statuses</option>
           <option value="paid">Paid</option>
           <option value="created">Created</option>
@@ -60,7 +70,7 @@ export default function Orders() {
       <Card>
         {isLoading ? (
           <div className="p-5 text-text-muted">Loading…</div>
-        ) : filtered.length === 0 ? (
+        ) : orders.length === 0 ? (
           <EmptyState title="No orders found" description="Orders will show up here once users start buying credits." />
         ) : (
           <Table>
@@ -76,7 +86,7 @@ export default function Orders() {
               </Tr>
             </Thead>
             <Tbody>
-              {filtered.map((order) => (
+              {orders.map((order) => (
                 <Tr key={order.id}>
                   <Td>
                     <div className="font-medium">{order.user?.name || "—"}</div>
@@ -91,9 +101,7 @@ export default function Orders() {
                   <Td className="text-text-muted">{new Date(order.createdAt).toLocaleString()}</Td>
                   <Td>
                     {order.status === "paid" && (
-                      <Button variant="secondary" size="sm" onClick={() => setRefundTarget(order)}>
-                        Refund
-                      </Button>
+                      <IconButton label="Refund order" icon={Undo2} onClick={() => setRefundTarget(order)} />
                     )}
                   </Td>
                 </Tr>
@@ -101,6 +109,7 @@ export default function Orders() {
             </Tbody>
           </Table>
         )}
+        {data && <Pagination page={data.page} total={data.total} limit={data.limit} onPageChange={setPage} />}
       </Card>
 
       {refundTarget && (

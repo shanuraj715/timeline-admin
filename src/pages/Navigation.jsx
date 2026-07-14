@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { fetchNavItems, createNavItem, updateNavItem, deleteNavItem, reorderNavItems } from "../api/cms";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Input, Checkbox } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Modal } from "../components/ui/Modal";
@@ -125,12 +126,8 @@ export default function Navigation() {
                   </Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => setModalItem(item)}>
-                        Edit
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(item)}>
-                        Delete
-                      </Button>
+                      <IconButton label="Edit nav item" icon={Pencil} onClick={() => setModalItem(item)} />
+                      <IconButton label="Delete nav item" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(item)} />
                     </div>
                   </Td>
                 </Tr>

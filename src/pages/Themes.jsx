@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Star, Pencil, Trash2 } from "lucide-react";
 import { fetchThemes, createTheme, updateTheme, deleteTheme, setDefaultTheme, uploadThemeImage } from "../api/themes";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Input, Textarea, Select } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
@@ -127,16 +128,14 @@ export default function Themes() {
                   <Td>
                     <div className="flex justify-end gap-2">
                       {theme.status === "published" && !theme.isDefault && (
-                        <Button variant="secondary" size="sm" onClick={() => setDefaultMutation.mutate(theme.id)}>
-                          Set as default
-                        </Button>
+                        <IconButton
+                          label="Set as site default"
+                          icon={Star}
+                          onClick={() => setDefaultMutation.mutate(theme.id)}
+                        />
                       )}
-                      <Button variant="secondary" size="sm" onClick={() => setModalTheme(theme)}>
-                        Edit
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(theme)}>
-                        Delete
-                      </Button>
+                      <IconButton label="Edit theme" icon={Pencil} onClick={() => setModalTheme(theme)} />
+                      <IconButton label="Delete theme" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(theme)} />
                     </div>
                   </Td>
                 </Tr>

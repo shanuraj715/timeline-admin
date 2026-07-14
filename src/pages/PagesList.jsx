@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import { fetchPages, deletePage } from "../api/cms";
 import { Card } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { useToast } from "../context/ToastContext";
@@ -63,12 +65,8 @@ export default function PagesList() {
                   <Td className="text-text-muted">{new Date(page.updatedAt).toLocaleDateString()}</Td>
                   <Td>
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => navigate(`/pages/${page._id}`)}>
-                        Edit
-                      </Button>
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(page)}>
-                        Delete
-                      </Button>
+                      <IconButton label="Edit page" icon={Pencil} onClick={() => navigate(`/pages/${page._id}`)} />
+                      <IconButton label="Delete page" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(page)} />
                     </div>
                   </Td>
                 </Tr>

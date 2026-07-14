@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { fetchFlags, createFlag, updateFlag, deleteFlag } from "../api/featureFlags";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { Input, Textarea } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Modal } from "../components/ui/Modal";
@@ -91,9 +93,7 @@ export default function FeatureFlags() {
                   </Td>
                   <Td>
                     <div className="flex justify-end">
-                      <Button variant="danger" size="sm" onClick={() => setDeleteTarget(flag)}>
-                        Delete
-                      </Button>
+                      <IconButton label="Delete flag" icon={Trash2} variant="danger" onClick={() => setDeleteTarget(flag)} />
                     </div>
                   </Td>
                 </Tr>
