@@ -42,6 +42,66 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
+/* Accent color picker — overrides only --primary/--primary-hover/--primary-fg
+   on top of whatever light/dark block already applied above; every other
+   token (surfaces, borders, text) stays the same regardless of accent.
+   "blue" is the default and has no override block (it's just the base
+   --primary values already set above). */
+[data-theme="light"][data-accent="red"] {
+  --primary: #dc2626;
+  --primary-hover: #b91c1c;
+  --primary-fg: #ffffff;
+}
+[data-theme="dark"][data-accent="red"] {
+  --primary: #f87171;
+  --primary-hover: #fca5a5;
+  --primary-fg: #2a0a0a;
+}
+
+[data-theme="light"][data-accent="green"] {
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --primary-fg: #ffffff;
+}
+[data-theme="dark"][data-accent="green"] {
+  --primary: #4ade80;
+  --primary-hover: #6ee7a5;
+  --primary-fg: #062012;
+}
+
+[data-theme="light"][data-accent="purple"] {
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-fg: #ffffff;
+}
+[data-theme="dark"][data-accent="purple"] {
+  --primary: #a78bfa;
+  --primary-hover: #c4b5fd;
+  --primary-fg: #1e1233;
+}
+
+[data-theme="light"][data-accent="orange"] {
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-fg: #ffffff;
+}
+[data-theme="dark"][data-accent="orange"] {
+  --primary: #fb923c;
+  --primary-hover: #fdba74;
+  --primary-fg: #2a1206;
+}
+
+[data-theme="light"][data-accent="pink"] {
+  --primary: #db2777;
+  --primary-hover: #be185d;
+  --primary-fg: #ffffff;
+}
+[data-theme="dark"][data-accent="pink"] {
+  --primary: #f472b6;
+  --primary-hover: #f9a8d4;
+  --primary-fg: #2a0f1c;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0b0d10;

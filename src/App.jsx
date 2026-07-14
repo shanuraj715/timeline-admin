@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -6,23 +6,31 @@ import { ToastProvider } from "./context/ToastContext";
 import { RequireAuth } from "./components/RequireAuth";
 import { Layout } from "./components/Layout";
 import Login from "./pages/Login";
-import Navigation from "./pages/Navigation";
-import Footer from "./pages/Footer";
-import PagesList from "./pages/PagesList";
-import PageEditor from "./pages/PageEditor";
-import Pricing from "./pages/Pricing";
-import PaymentGateways from "./pages/PaymentGateways";
-import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
-import FeatureFlags from "./pages/FeatureFlags";
-import Themes from "./pages/Themes";
-import Users from "./pages/Users";
-import Timelines from "./pages/Timelines";
-import SecurityLog from "./pages/SecurityLog";
+import Content from "./pages/Content";
+import Commerce from "./pages/Commerce";
+import Platform from "./pages/Platform";
+import PageEditor from "./pages/PageEditor";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
 });
+
+// Old flat routes from before pages were grouped into tabs — redirected so
+// any bookmark or shared link still lands somewhere useful instead of 404ing.
+const LEGACY_REDIRECTS = [
+  ["navigation", "/content#navigation"],
+  ["footer", "/content#footer"],
+  ["pages", "/content#pages"],
+  ["themes", "/content#themes"],
+  ["pricing", "/commerce#pricing"],
+  ["payment-gateways", "/commerce#gateways"],
+  ["orders", "/commerce#orders"],
+  ["users", "/platform#users"],
+  ["timelines", "/platform#timelines"],
+  ["security-log", "/platform#security"],
+  ["feature-flags", "/platform#flags"],
+];
 
 export default function App() {
   return (
@@ -41,19 +49,14 @@ export default function App() {
                   }
                 >
                   <Route index element={<Dashboard />} />
-                  <Route path="navigation" element={<Navigation />} />
-                  <Route path="footer" element={<Footer />} />
-                  <Route path="pages" element={<PagesList />} />
+                  <Route path="content" element={<Content />} />
+                  <Route path="commerce" element={<Commerce />} />
+                  <Route path="platform" element={<Platform />} />
                   <Route path="pages/new" element={<PageEditor />} />
                   <Route path="pages/:id" element={<PageEditor />} />
-                  <Route path="themes" element={<Themes />} />
-                  <Route path="pricing" element={<Pricing />} />
-                  <Route path="payment-gateways" element={<PaymentGateways />} />
-                  <Route path="orders" element={<Orders />} />
-                  <Route path="users" element={<Users />} />
-                  <Route path="timelines" element={<Timelines />} />
-                  <Route path="security-log" element={<SecurityLog />} />
-                  <Route path="feature-flags" element={<FeatureFlags />} />
+                  {LEGACY_REDIRECTS.map(([from, to]) => (
+                    <Route key={from} path={from} element={<Navigate to={to} replace />} />
+                  ))}
                 </Route>
               </Routes>
             </BrowserRouter>

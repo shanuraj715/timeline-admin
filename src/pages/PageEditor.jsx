@@ -55,7 +55,7 @@ export default function PageEditor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pages"] });
       toast("Page saved", "success");
-      navigate("/pages");
+      navigate("/content#pages");
     },
     onError: (err) => toast(err.message, "error"),
   });
@@ -73,7 +73,7 @@ export default function PageEditor() {
           <p className="text-sm text-text-muted">Format content with the toolbar below.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate("/pages")}>
+          <Button variant="secondary" onClick={() => navigate("/content#pages")}>
             Cancel
           </Button>
           <Button

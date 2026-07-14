@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { fetchThemes, createTheme, updateTheme, deleteTheme, setDefaultTheme, uploadThemeImage } from "../api/themes";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
@@ -84,7 +85,9 @@ export default function Themes() {
             Design timeline themes. Publish one and set it as the site default to apply it free to every new timeline.
           </p>
         </div>
-        <Button onClick={() => setModalTheme({ ...EMPTY_THEME })}>Add theme</Button>
+        <Button onClick={() => setModalTheme({ ...EMPTY_THEME })}>
+          <Plus size={16} /> Add theme
+        </Button>
       </div>
 
       <Card>

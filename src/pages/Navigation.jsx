@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { fetchNavItems, createNavItem, updateNavItem, deleteNavItem, reorderNavItems } from "../api/cms";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
@@ -68,7 +69,9 @@ export default function Navigation() {
           <h1 className="text-lg font-semibold text-text">Navigation</h1>
           <p className="text-sm text-text-muted">Header menu items shown on the public site.</p>
         </div>
-        <Button onClick={() => setModalItem({ ...EMPTY_ITEM })}>Add item</Button>
+        <Button onClick={() => setModalItem({ ...EMPTY_ITEM })}>
+          <Plus size={16} /> Add item
+        </Button>
       </div>
 
       <Card>

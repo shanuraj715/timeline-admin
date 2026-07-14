@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { fetchPlans, createPlan, updatePlan, deletePlan } from "../api/billing";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
@@ -74,7 +75,9 @@ export default function Pricing() {
           <h1 className="text-lg font-semibold text-text">Pricing plans</h1>
           <p className="text-sm text-text-muted">Credit packs users can buy on the public pricing page.</p>
         </div>
-        <Button onClick={() => setModalPlan({ ...EMPTY_PLAN })}>Add plan</Button>
+        <Button onClick={() => setModalPlan({ ...EMPTY_PLAN })}>
+          <Plus size={16} /> Add plan
+        </Button>
       </div>
 
       <Card>

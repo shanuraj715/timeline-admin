@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Plus, ArrowLeft, ArrowRight } from "lucide-react";
 import {
   fetchFooterColumns,
   createFooterColumn,
@@ -92,7 +92,9 @@ export default function Footer() {
           <h1 className="text-lg font-semibold text-text">Footer</h1>
           <p className="text-sm text-text-muted">Columns and links shown in the public site footer.</p>
         </div>
-        <Button onClick={() => setModalColumn({ ...EMPTY_COLUMN })}>Add column</Button>
+        <Button onClick={() => setModalColumn({ ...EMPTY_COLUMN })}>
+          <Plus size={16} /> Add column
+        </Button>
       </div>
 
       {isLoading ? (
@@ -153,18 +155,18 @@ export default function Footer() {
                   <button
                     onClick={() => move(index, -1)}
                     disabled={index === 0}
-                    className="rounded px-1 text-text-muted hover:bg-surface-hover disabled:opacity-30"
+                    className="rounded p-1 text-text-muted hover:bg-surface-hover disabled:opacity-30"
                     aria-label="Move left"
                   >
-                    ↑
+                    <ArrowLeft size={14} />
                   </button>
                   <button
                     onClick={() => move(index, 1)}
                     disabled={index === columns.length - 1}
-                    className="rounded px-1 text-text-muted hover:bg-surface-hover disabled:opacity-30"
+                    className="rounded p-1 text-text-muted hover:bg-surface-hover disabled:opacity-30"
                     aria-label="Move right"
                   >
-                    ↓
+                    <ArrowRight size={14} />
                   </button>
                 </div>
                 <div className="flex gap-2">
