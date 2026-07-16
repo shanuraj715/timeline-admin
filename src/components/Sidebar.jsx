@@ -1,16 +1,20 @@
 import { NavLink } from "react-router-dom";
-import { GalleryHorizontalEnd, LayoutDashboard, Layers, ShoppingBag, ShieldCheck, LogOut, X } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutDashboard, Layers, ShoppingBag, ShieldCheck, Bell, LogOut, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 // Each top-level item now contains its own tabbed sub-pages (see
-// pages/Content.jsx, Commerce.jsx, Platform.jsx) — collapsing what used to
-// be ~11 flat sidebar links down to 4, with the specific section reachable
-// via the URL hash (e.g. /commerce#coupons) instead of its own nav entry.
+// pages/Content.jsx, Commerce.jsx, Platform.jsx, Notifications.jsx) —
+// collapsing what used to be ~11 flat sidebar links down to 5, with the
+// specific section reachable via the URL hash (e.g. /commerce#coupons)
+// instead of its own nav entry. Notifications was split out of Platform
+// (which had grown to 8 tabs) into its own item once email templates/
+// providers landed, keeping each grouped page to a handful of tabs.
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", end: true, icon: LayoutDashboard },
   { to: "/content", label: "Content", icon: Layers },
   { to: "/commerce", label: "Commerce", icon: ShoppingBag },
   { to: "/platform", label: "Platform", icon: ShieldCheck },
+  { to: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 // Static and always visible at lg+ (plenty of room); below that it's a

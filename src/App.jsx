@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Content from "./pages/Content";
 import Commerce from "./pages/Commerce";
 import Platform from "./pages/Platform";
+import Notifications from "./pages/Notifications";
 import PageEditor from "./pages/PageEditor";
 
 const queryClient = new QueryClient({
@@ -52,6 +53,7 @@ export default function App() {
                   <Route path="content" element={<Content />} />
                   <Route path="commerce" element={<Commerce />} />
                   <Route path="platform" element={<Platform />} />
+                  <Route path="notifications" element={<Notifications />} />
                   <Route path="pages/new" element={<PageEditor />} />
                   <Route path="pages/:id" element={<PageEditor />} />
                   {LEGACY_REDIRECTS.map(([from, to]) => (

@@ -5,6 +5,11 @@
    so the in-app theme toggle can override the OS preference. */
 :root,
 [data-theme="light"] {
+  /* Native browser chrome (scrollbars, form controls) follows this, not
+     --bg/--surface — without it the browser assumes a light UI regardless
+     of the app's own theme, which is why scrollbars stayed white in dark
+     mode even though everything else correctly switched over. */
+  color-scheme: light;
   --bg: #f5f6f8;
   --surface: #ffffff;
   --surface-hover: #f1f3f5;
@@ -24,6 +29,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0b0d10;
   --surface: #14171c;
   --surface-hover: #1b1f26;
@@ -44,6 +50,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0b0d10;
     --surface: #14171c;
     --surface-hover: #1b1f26;
@@ -179,6 +186,17 @@ a {
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Theme editor's live particle-effect preview (Themes.jsx) — falls from
+   above the preview box down past its bottom edge, looping. */
+@keyframes theme-preview-particle-fall {
+  0% {
+    transform: translateY(-20%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(220%) rotate(360deg);
+  }
 }
 
 /* TipTap editor content (RichTextEditor) — not a CSS module since the

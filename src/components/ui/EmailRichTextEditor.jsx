@@ -1,52 +1,39 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
-import Youtube from "@tiptap/extension-youtube";
 import {
   Heading1,
   Heading2,
-  Heading3,
   Bold,
   Italic,
   UnderlineIcon,
-  Strikethrough,
   List,
   ListOrdered,
-  Quote,
   LinkIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
   Undo,
   Redo,
   Image as ImageIcon,
-  Video as VideoIcon,
-  Clapperboard,
   Code2,
   Eye,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Video } from "./videoExtension";
-import { uploadCmsMedia } from "../../api/cms";
+import { EmailImage, IMAGE_SIZES, IMAGE_ALIGNS } from "./emailImageExtension";
+import { uploadEmailTemplateImage } from "../../api/emailTemplates";
 import { useToast } from "../../context/ToastContext";
 
-// TipTap's Youtube extension only recognizes its own wrapper markup
-// (`div[data-youtube-video] iframe`) when re-parsing content — a raw
-// `<iframe src="https://www.youtube.com/embed/...">` pasted directly into
-// HTML mode (e.g. copied from YouTube's own "Share > Embed" box) wouldn't
-// otherwise be picked up as a youtube node and would get silently dropped
-// when switching back to Visual mode. Extending parseHTML to also match a
-// bare youtube iframe keeps that round-trip working.
-const YoutubeWithRawEmbed = Youtube.extend({
-  parseHTML() {
-    return [
-      { tag: "div[data-youtube-video] iframe" },
-      { tag: 'iframe[src*="youtube.com"]' },
-      { tag: 'iframe[src*="youtube-nocookie.com"]' },
-    ];
-  },
-});
-
+// Mirrors RichTextEditor.jsx's structure and visual language (same
+// ToolbarButton/ToolbarDivider shape, same Visual/HTML mode toggle,
+// controlled value/onChange) but is its own component rather than a shared
+// one: email HTML has a different, narrower set of things that actually
+// survive into an inbox — no video/YouTube embeds (most clients strip
+// <video>/<iframe> outright), and images need the width/align controls
+// this editor's EmailImage extension adds, neither of which apply to CMS
+// page content.
 function ToolbarButton({ onClick, active, disabled, title, children }) {
   return (
     <button
@@ -54,7 +41,7 @@ function ToolbarButton({ onClick, active, disabled, title, children }) {
       title={title}
       disabled={disabled}
       onMouseDown={(e) => {
-        e.preventDefault(); // keep editor selection/focus intact on click
+        e.preventDefault();
         onClick();
       }}
       style={{
@@ -81,22 +68,24 @@ function ToolbarDivider() {
   return <div style={{ width: 1, background: "var(--border)", margin: "4px 4px" }} />;
 }
 
-export function RichTextEditor({ value, onChange, placeholder }) {
+// forwardRef so the parent (EmailTemplates.jsx's TemplateModal, which also
+// owns a plain Subject <Input> outside this component) can insert a
+// `{variable}` token into whichever of the two editing surfaces here —
+// visual editor or raw HTML textarea — is actually active, without needing
+// to know which one that is or reach into TipTap's internals itself.
+export const EmailRichTextEditor = forwardRef(function EmailRichTextEditor({ value, onChange }, ref) {
   const [mode, setMode] = useState("visual"); // "visual" | "html"
   const [uploading, setUploading] = useState(false);
   const imageInputRef = useRef(null);
-  const videoInputRef = useRef(null);
+  const htmlTextareaRef = useRef(null);
   const toast = useToast();
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Placeholder.configure({ placeholder: placeholder || "Write your page content…" }),
-      Image,
-      Video,
-      YoutubeWithRawEmbed.configure({ nocookie: true, width: 640, height: 360 }),
+      EmailImage,
     ],
     content: value || "",
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -107,11 +96,10 @@ export function RichTextEditor({ value, onChange, placeholder }) {
     },
   });
 
-  // Keep the editor in sync when `value` changes externally (e.g. loading
-  // an existing page after the editor already mounted, or switching back
-  // from HTML mode where edits only touched the raw textarea). Skipped
-  // while HTML mode is showing so every keystroke there doesn't trigger a
-  // full re-parse of a hidden editor.
+  // Keep the editor in sync when `value` changes externally — loading an
+  // existing template, or switching back from HTML mode where edits only
+  // touched the raw textarea. Skipped while HTML mode is showing so every
+  // keystroke there doesn't trigger a full re-parse of a hidden editor.
   useEffect(() => {
     if (!editor || mode === "html") return;
     const current = editor.getHTML();
@@ -119,6 +107,33 @@ export function RichTextEditor({ value, onChange, placeholder }) {
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [editor, value, mode]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      insertVariable(name) {
+        const token = `{${name}}`;
+        if (mode === "visual") {
+          editor?.chain().focus().insertContent(token).run();
+          return;
+        }
+        const el = htmlTextareaRef.current;
+        const current = value || "";
+        if (!el) {
+          onChange(current + token);
+          return;
+        }
+        const start = el.selectionStart ?? current.length;
+        const end = el.selectionEnd ?? current.length;
+        onChange(current.slice(0, start) + token + current.slice(end));
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(start + token.length, start + token.length);
+        });
+      },
+    }),
+    [mode, editor, value, onChange]
+  );
 
   if (!editor) return null;
 
@@ -133,27 +148,16 @@ export function RichTextEditor({ value, onChange, placeholder }) {
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }
 
-  async function handleUpload(file, kind) {
+  async function handleUpload(file) {
     setUploading(true);
     try {
-      const { url, type } = await uploadCmsMedia(file);
-      if (kind === "image" || type === "image") {
-        editor.chain().focus().setImage({ src: url }).run();
-      } else {
-        editor.chain().focus().setVideo({ src: url }).run();
-      }
+      const { url } = await uploadEmailTemplateImage(file);
+      editor.chain().focus().setImage({ src: url, width: "100%", align: "center" }).run();
     } catch (err) {
       toast(err.message, "error");
     } finally {
       setUploading(false);
     }
-  }
-
-  function setYoutube() {
-    const url = window.prompt("YouTube video URL", "https://www.youtube.com/watch?v=");
-    if (!url) return;
-    const ok = editor.chain().focus().setYoutubeVideo({ src: url }).run();
-    if (!ok) toast("That doesn't look like a valid YouTube URL", "error");
   }
 
   return (
@@ -184,21 +188,10 @@ export function RichTextEditor({ value, onChange, placeholder }) {
             >
               <Heading2 size={16} />
             </ToolbarButton>
-            <ToolbarButton
-              title="Heading 3"
-              active={editor.isActive("heading", { level: 3 })}
-              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            >
-              <Heading3 size={16} />
-            </ToolbarButton>
 
             <ToolbarDivider />
 
-            <ToolbarButton
-              title="Bold"
-              active={editor.isActive("bold")}
-              onClick={() => editor.chain().focus().toggleBold().run()}
-            >
+            <ToolbarButton title="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
               <Bold size={16} />
             </ToolbarButton>
             <ToolbarButton
@@ -215,12 +208,29 @@ export function RichTextEditor({ value, onChange, placeholder }) {
             >
               <UnderlineIcon size={16} />
             </ToolbarButton>
+
+            <ToolbarDivider />
+
             <ToolbarButton
-              title="Strikethrough"
-              active={editor.isActive("strike")}
-              onClick={() => editor.chain().focus().toggleStrike().run()}
+              title="Align left"
+              active={editor.isActive({ textAlign: "left" })}
+              onClick={() => editor.chain().focus().setTextAlign("left").run()}
             >
-              <Strikethrough size={16} />
+              <AlignLeft size={16} />
+            </ToolbarButton>
+            <ToolbarButton
+              title="Align center"
+              active={editor.isActive({ textAlign: "center" })}
+              onClick={() => editor.chain().focus().setTextAlign("center").run()}
+            >
+              <AlignCenter size={16} />
+            </ToolbarButton>
+            <ToolbarButton
+              title="Align right"
+              active={editor.isActive({ textAlign: "right" })}
+              onClick={() => editor.chain().focus().setTextAlign("right").run()}
+            >
+              <AlignRight size={16} />
             </ToolbarButton>
 
             <ToolbarDivider />
@@ -239,51 +249,22 @@ export function RichTextEditor({ value, onChange, placeholder }) {
             >
               <ListOrdered size={16} />
             </ToolbarButton>
-            <ToolbarButton
-              title="Quote"
-              active={editor.isActive("blockquote")}
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            >
-              <Quote size={16} />
-            </ToolbarButton>
             <ToolbarButton title="Link" active={editor.isActive("link")} onClick={setLink}>
               <LinkIcon size={16} />
             </ToolbarButton>
 
             <ToolbarDivider />
 
-            <ToolbarButton
-              title="Insert image"
-              disabled={uploading}
-              onClick={() => imageInputRef.current?.click()}
-            >
+            <ToolbarButton title="Insert image" disabled={uploading} onClick={() => imageInputRef.current?.click()}>
               <ImageIcon size={16} />
-            </ToolbarButton>
-            <ToolbarButton
-              title="Insert video"
-              disabled={uploading}
-              onClick={() => videoInputRef.current?.click()}
-            >
-              <VideoIcon size={16} />
-            </ToolbarButton>
-            <ToolbarButton title="Embed YouTube video" onClick={setYoutube}>
-              <Clapperboard size={16} />
             </ToolbarButton>
 
             <ToolbarDivider />
 
-            <ToolbarButton
-              title="Undo"
-              disabled={!editor.can().undo()}
-              onClick={() => editor.chain().focus().undo().run()}
-            >
+            <ToolbarButton title="Undo" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}>
               <Undo size={16} />
             </ToolbarButton>
-            <ToolbarButton
-              title="Redo"
-              disabled={!editor.can().redo()}
-              onClick={() => editor.chain().focus().redo().run()}
-            >
+            <ToolbarButton title="Redo" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}>
               <Redo size={16} />
             </ToolbarButton>
           </>
@@ -291,19 +272,12 @@ export function RichTextEditor({ value, onChange, placeholder }) {
 
         {mode === "html" && (
           <span style={{ fontSize: 12, color: "var(--text-muted)", padding: "0 4px" }}>
-            Editing raw HTML — paste embed code directly, or hand-write markup.
+            Editing raw HTML — email clients only render inline styles, not &lt;style&gt; blocks or classes.
           </span>
         )}
 
-        {/* Visual/HTML toggle stays visible in both modes, pinned to the
-            right so it reads as a separate mode switch rather than one more
-            formatting tool. */}
         <span style={{ marginLeft: "auto", display: "flex", gap: 2 }}>
-          <ToolbarButton
-            title="Visual editor"
-            active={mode === "visual"}
-            onClick={() => setMode("visual")}
-          >
+          <ToolbarButton title="Visual editor" active={mode === "visual"} onClick={() => setMode("visual")}>
             <Eye size={16} />
           </ToolbarButton>
           <ToolbarButton title="Edit raw HTML" active={mode === "html"} onClick={() => setMode("html")}>
@@ -313,9 +287,51 @@ export function RichTextEditor({ value, onChange, placeholder }) {
       </div>
 
       {mode === "visual" ? (
-        <EditorContent editor={editor} className="rich-text-content" />
+        <>
+          <BubbleMenu editor={editor} shouldShow={({ editor }) => editor.isActive("image")}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                padding: 4,
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              {IMAGE_SIZES.map((s) => (
+                <ToolbarButton
+                  key={s.value}
+                  title={`Size: ${s.label}`}
+                  active={editor.getAttributes("image").width === s.value}
+                  onClick={() => editor.chain().focus().updateAttributes("image", { width: s.value }).run()}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 600 }}>{s.label}</span>
+                </ToolbarButton>
+              ))}
+              <ToolbarDivider />
+              {IMAGE_ALIGNS.map((a) => {
+                const Icon = a === "left" ? AlignLeft : a === "right" ? AlignRight : AlignCenter;
+                return (
+                  <ToolbarButton
+                    key={a}
+                    title={`Align ${a}`}
+                    active={editor.getAttributes("image").align === a}
+                    onClick={() => editor.chain().focus().updateAttributes("image", { align: a }).run()}
+                  >
+                    <Icon size={16} />
+                  </ToolbarButton>
+                );
+              })}
+            </div>
+          </BubbleMenu>
+          <EditorContent editor={editor} className="rich-text-content" />
+        </>
       ) : (
         <textarea
+          ref={htmlTextareaRef}
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
           spellCheck={false}
@@ -342,21 +358,10 @@ export function RichTextEditor({ value, onChange, placeholder }) {
         style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleUpload(file, "image");
-          e.target.value = "";
-        }}
-      />
-      <input
-        ref={videoInputRef}
-        type="file"
-        accept="video/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleUpload(file, "video");
+          if (file) handleUpload(file);
           e.target.value = "";
         }}
       />
     </div>
   );
-}
+});
