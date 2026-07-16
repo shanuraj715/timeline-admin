@@ -8,13 +8,21 @@ import tailwindcss from "@tailwindcss/vite";
 // existing cookie-based auth/CSRF system works unchanged. See
 // timeline-backend/src/lib/auth/csrf.js's ADMIN_APP_URL check, which is
 // what actually accepts requests carrying this origin.
+//
+// The proxy *target* is this Vite dev server's own outbound request to the
+// backend (server-to-server, not the browser), so it needs to name
+// whatever host actually reaches the backend from wherever this process is
+// running — "localhost:4000" for plain local dev, but "backend:4000" (the
+// docker-compose service name) when this runs inside the admin container
+// and "localhost" would otherwise resolve to that container itself.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5174,
+    host: true,
     proxy: {
       "/api": {
-        target: "http://localhost:4000",
+        target: process.env.BACKEND_URL || "http://localhost:4000",
         changeOrigin: false,
       },
     },
