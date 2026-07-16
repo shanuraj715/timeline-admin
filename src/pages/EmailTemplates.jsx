@@ -243,9 +243,16 @@ function TemplateModal({ template, onClose, onSaved }) {
               </Button>
             </div>
             {preview && <p className="truncate text-xs text-text-muted">Subject: {preview.subject}</p>}
+            {/* No `allow-scripts`/`allow-same-origin` — this only needs to
+                render markup/images/styles, never execute anything. Without
+                a sandbox, a <script> tag saved into a template's raw HTML
+                (by a compromised or malicious admin account) would run for
+                real, with this admin panel's own origin and session, the
+                moment anyone next opens that template to edit it. */}
             <iframe
               title="Email preview"
               srcDoc={preview?.html || ""}
+              sandbox=""
               className="h-[420px] w-full rounded-lg border border-border bg-white"
             />
           </div>
