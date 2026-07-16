@@ -2,8 +2,11 @@ export function formatCompactNumber(value) {
   return new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
+// `undefined` locale lets Intl use the runtime's own locale while still
+// rendering the correct symbol/decimal-places for whatever `currency` code
+// is given — that's the actual fix needed, not per-currency locale data.
 export function formatCurrency(paise, currency = "INR") {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency,
     notation: "compact",

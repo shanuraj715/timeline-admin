@@ -17,7 +17,7 @@ const LIMIT = 20;
 const STATUS_TONE = { paid: "success", created: "neutral", failed: "danger", cancelled: "warning", refunded: "warning" };
 
 function formatPrice(paise, currency) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(paise / 100);
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(paise / 100);
 }
 
 export default function Orders() {
