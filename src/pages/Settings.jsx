@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle } from "lucide-react";
 import { fetchPlatformSettings, updatePlatformSettings } from "../api/settings";
 import { fetchRecaptchaSettings, updateRecaptchaSettings } from "../api/recaptcha";
+import { fetchGoogleOAuthSettings, updateGoogleOAuthSettings } from "../api/googleOAuth";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
-import { Input } from "../components/ui/Input";
+import { Input, Textarea } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { Switch } from "../components/ui/Switch";
 import { AccentPicker } from "../components/AccentPicker";
 import { useToast } from "../context/ToastContext";
 
@@ -19,6 +22,7 @@ export default function Settings() {
   const [freeStorageMb, setFreeStorageMb] = useState("");
   const [freeTimelines, setFreeTimelines] = useState("");
   const [creditsPerExtraTimeline, setCreditsPerExtraTimeline] = useState("");
+  const [defaultCreditsOnSignup, setDefaultCreditsOnSignup] = useState("");
   const [storageUnitMb, setStorageUnitMb] = useState("");
   const [storageUnitPriceCredits, setStorageUnitPriceCredits] = useState("");
 
@@ -27,6 +31,7 @@ export default function Settings() {
     setFreeStorageMb(String(Math.round(settings.freeStorageBytesPerTimeline / BYTES_PER_MB)));
     setFreeTimelines(String(settings.freeTimelinesPerAccount));
     setCreditsPerExtraTimeline(String(settings.creditsPerExtraTimeline));
+    setDefaultCreditsOnSignup(String(settings.defaultCreditsOnSignup ?? 0));
     setStorageUnitMb(String(Math.round(settings.storageUnitBytes / BYTES_PER_MB)));
     setStorageUnitPriceCredits(String(settings.storageUnitPriceCredits));
   }, [settings]);
@@ -37,12 +42,36 @@ export default function Settings() {
         freeStorageBytesPerTimeline: Math.round(Number(freeStorageMb) * BYTES_PER_MB),
         freeTimelinesPerAccount: Number(freeTimelines),
         creditsPerExtraTimeline: Number(creditsPerExtraTimeline),
+        defaultCreditsOnSignup: Number(defaultCreditsOnSignup),
         storageUnitBytes: Math.round(Number(storageUnitMb) * BYTES_PER_MB),
         storageUnitPriceCredits: Number(storageUnitPriceCredits),
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(["platform-settings"], updated);
       toast("Settings saved", "success");
+    },
+    onError: (err) => toast(err.message, "error"),
+  });
+
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
+
+  useEffect(() => {
+    if (!settings?.maintenanceMode) return;
+    setMaintenanceEnabled(settings.maintenanceMode.enabled);
+    setMaintenanceMessage(settings.maintenanceMode.message || "");
+  }, [settings]);
+
+  const maintenanceMutation = useMutation({
+    mutationFn: (patch) => updatePlatformSettings({ maintenanceMode: patch }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["platform-settings"], updated);
+      toast(
+        updated.maintenanceMode.enabled
+          ? "Maintenance mode enabled — the main site is now down for visitors"
+          : "Maintenance mode disabled",
+        updated.maintenanceMode.enabled ? "info" : "success"
+      );
     },
     onError: (err) => toast(err.message, "error"),
   });
@@ -74,6 +103,35 @@ export default function Settings() {
     onError: (err) => toast(err.message, "error"),
   });
 
+  const { data: googleOAuth, isLoading: googleOAuthLoading } = useQuery({
+    queryKey: ["google-oauth-settings"],
+    queryFn: fetchGoogleOAuthSettings,
+  });
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("");
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!googleOAuth) return;
+    setGoogleClientId(googleOAuth.clientId || "");
+    // Pre-filled with the masked placeholder, same convention as the
+    // reCAPTCHA secret above — saving without touching this field leaves
+    // the stored secret unchanged.
+    setGoogleClientSecret(googleOAuth.clientSecretMasked || "");
+    setGoogleEnabled(googleOAuth.isEnabled);
+  }, [googleOAuth]);
+
+  const googleOAuthMutation = useMutation({
+    mutationFn: () =>
+      updateGoogleOAuthSettings({ clientId: googleClientId, clientSecret: googleClientSecret, isEnabled: googleEnabled }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["google-oauth-settings"], updated);
+      setGoogleClientSecret(updated.clientSecretMasked || "");
+      toast("Google sign-in settings saved", "success");
+    },
+    onError: (err) => toast(err.message, "error"),
+  });
+
   if (isLoading) return <div className="p-5 text-text-muted">Loading…</div>;
 
   return (
@@ -89,6 +147,47 @@ export default function Settings() {
           row started. `columns` flows each card into the next available
           space instead, like masonry. */}
       <div className="columns-1 gap-4 md:columns-2 xl:columns-3">
+        <Card className={`mb-4 break-inside-avoid ${settings?.maintenanceMode?.enabled ? "border-warning/50" : ""}`}>
+          <CardHeader
+            title={
+              <div className="flex items-center gap-2">
+                Maintenance mode
+                {settings?.maintenanceMode?.enabled && (
+                  <Badge tone="warning">
+                    <span className="inline-flex items-center gap-1">
+                      <AlertTriangle size={12} /> Live
+                    </span>
+                  </Badge>
+                )}
+              </div>
+            }
+            description="Affects the main site only — every API call from there returns a maintenance response and visitors see a maintenance page instead. This admin panel is never affected, so you can always come back here to turn it off."
+          />
+          <CardBody className="flex flex-col gap-4">
+            <Switch
+              checked={maintenanceEnabled}
+              onChange={setMaintenanceEnabled}
+              label={maintenanceEnabled ? "Site will be in maintenance mode" : "Site will be live"}
+            />
+            <Textarea
+              label="Message shown to visitors"
+              rows={3}
+              maxLength={500}
+              value={maintenanceMessage}
+              onChange={(e) => setMaintenanceMessage(e.target.value)}
+              placeholder="We're currently performing scheduled maintenance. We'll be back shortly."
+            />
+            <Button
+              onClick={() => maintenanceMutation.mutate({ enabled: maintenanceEnabled, message: maintenanceMessage })}
+              disabled={maintenanceMutation.isPending}
+              variant={maintenanceEnabled ? "danger" : "primary"}
+              className="self-start"
+            >
+              {maintenanceEnabled ? "Save & take site down" : "Save"}
+            </Button>
+          </CardBody>
+        </Card>
+
         <Card className="mb-4 break-inside-avoid">
           <CardHeader title="Appearance" description="Only affects this admin panel, on this device." />
           <CardBody>
@@ -123,6 +222,14 @@ export default function Settings() {
               min={0}
               value={creditsPerExtraTimeline}
               onChange={(e) => setCreditsPerExtraTimeline(e.target.value)}
+            />
+            <Input
+              label="Credits granted automatically on signup"
+              help="Added to every new account's balance the moment they register. 0 means no signup bonus."
+              type="number"
+              min={0}
+              value={defaultCreditsOnSignup}
+              onChange={(e) => setDefaultCreditsOnSignup(e.target.value)}
             />
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="self-start">
               Save
@@ -188,6 +295,56 @@ export default function Settings() {
             <Button
               onClick={() => recaptchaMutation.mutate()}
               disabled={recaptchaMutation.isPending}
+              className="self-start"
+            >
+              Save
+            </Button>
+          </CardBody>
+        </Card>
+
+        <Card className="mb-4 break-inside-avoid">
+          <CardHeader
+            title={
+              <div className="flex items-center gap-2">
+                Google sign-in
+                {!googleOAuthLoading && (
+                  <Badge tone={googleOAuth?.clientSecretConfigured ? "success" : "neutral"}>
+                    {googleOAuth?.clientSecretConfigured ? "Configured" : "Not configured"}
+                  </Badge>
+                )}
+              </div>
+            }
+            description={
+              <>
+                OAuth client for "Continue with Google" on the login and register pages. Create an OAuth 2.0
+                Client ID in Google Cloud Console and add this exact redirect URI to it:{" "}
+                <code className="rounded bg-surface-hover px-1 py-0.5 text-xs">
+                  {"{your site's URL}"}/api/auth/google/callback
+                </code>
+              </>
+            }
+          />
+          <CardBody className="flex flex-col gap-4">
+            <Input
+              label="Client ID"
+              value={googleClientId}
+              onChange={(e) => setGoogleClientId(e.target.value)}
+              placeholder="123456789-abc.apps.googleusercontent.com"
+            />
+            <Input
+              label="Client secret"
+              value={googleClientSecret}
+              onChange={(e) => setGoogleClientSecret(e.target.value)}
+              placeholder="GOCSPX-…"
+            />
+            <Switch
+              checked={googleEnabled}
+              onChange={setGoogleEnabled}
+              label={googleEnabled ? "Button is shown to visitors" : "Button is hidden"}
+            />
+            <Button
+              onClick={() => googleOAuthMutation.mutate()}
+              disabled={googleOAuthMutation.isPending}
               className="self-start"
             >
               Save
