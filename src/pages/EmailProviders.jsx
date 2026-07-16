@@ -7,6 +7,7 @@ import { Input } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Badge } from "../components/ui/Badge";
 import { useToast } from "../context/ToastContext";
+import { confirmSecretClear } from "../lib/confirmSecretClear";
 
 const COMMON_CONFIG_FIELDS = [
   { key: "fromEmail", label: "From email" },
@@ -125,6 +126,14 @@ function ProviderCard({ provider, record, onSave, saving }) {
   const dirty = JSON.stringify(form) !== JSON.stringify(initialFormFor(provider, record));
 
   function handleSave() {
+    const ok = confirmSecretClear(
+      provider.credentialFields.map((f) => ({
+        label: f.label,
+        hadValue: Boolean(record?.credentials?.[f.key]),
+        isEmpty: !form.credentials[f.key],
+      }))
+    );
+    if (!ok) return;
     const config = provider.hasSecureToggle ? { ...form.config, secure: form.secure } : form.config;
     onSave({ isEnabled: form.isEnabled, isDefault: form.isDefault, credentials: form.credentials, config });
   }

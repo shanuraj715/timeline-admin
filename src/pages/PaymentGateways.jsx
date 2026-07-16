@@ -7,6 +7,7 @@ import { Input, Select } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Badge } from "../components/ui/Badge";
 import { useToast } from "../context/ToastContext";
+import { confirmSecretClear } from "../lib/confirmSecretClear";
 
 const PROVIDERS = [
   {
@@ -109,6 +110,17 @@ function GatewayCard({ provider, gateway, onSave, saving }) {
     config: gateway?.config || {},
   });
 
+  function handleSave() {
+    const ok = confirmSecretClear(
+      provider.credentialFields.map((f) => ({
+        label: f.label,
+        hadValue: Boolean(gateway?.credentials?.[f.key]),
+        isEmpty: !form.credentials[f.key],
+      }))
+    );
+    if (ok) onSave(form);
+  }
+
   return (
     <Card>
       <CardHeader
@@ -148,7 +160,7 @@ function GatewayCard({ provider, gateway, onSave, saving }) {
             onChange={(v) => setForm({ ...form, isDefault: v })}
             label="Default gateway"
           />
-          <Button size="sm" onClick={() => onSave(form)} disabled={saving || !dirty}>
+          <Button size="sm" onClick={handleSave} disabled={saving || !dirty}>
             Save
           </Button>
         </div>

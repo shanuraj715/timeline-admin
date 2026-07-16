@@ -11,6 +11,7 @@ import { Badge } from "../components/ui/Badge";
 import { Switch } from "../components/ui/Switch";
 import { AccentPicker } from "../components/AccentPicker";
 import { useToast } from "../context/ToastContext";
+import { confirmSecretClear } from "../lib/confirmSecretClear";
 
 const BYTES_PER_MB = 1024 * 1024;
 
@@ -293,7 +294,12 @@ export default function Settings() {
               placeholder="6Lc…"
             />
             <Button
-              onClick={() => recaptchaMutation.mutate()}
+              onClick={() => {
+                const ok = confirmSecretClear([
+                  { label: "reCAPTCHA secret key", hadValue: Boolean(recaptcha?.secretKeyConfigured), isEmpty: !secretKey.trim() },
+                ]);
+                if (ok) recaptchaMutation.mutate();
+              }}
               disabled={recaptchaMutation.isPending}
               className="self-start"
             >
@@ -343,7 +349,12 @@ export default function Settings() {
               label={googleEnabled ? "Button is shown to visitors" : "Button is hidden"}
             />
             <Button
-              onClick={() => googleOAuthMutation.mutate()}
+              onClick={() => {
+                const ok = confirmSecretClear([
+                  { label: "Google client secret", hadValue: Boolean(googleOAuth?.clientSecretConfigured), isEmpty: !googleClientSecret.trim() },
+                ]);
+                if (ok) googleOAuthMutation.mutate();
+              }}
               disabled={googleOAuthMutation.isPending}
               className="self-start"
             >
