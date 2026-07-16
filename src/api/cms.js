@@ -28,3 +28,12 @@ export const createPage = (data) =>
 export const updatePage = (id, data) =>
   apiFetch(`/api/cms/pages/${id}`, { method: "PATCH", body: JSON.stringify(data) }).then((d) => d.page);
 export const deletePage = (id) => apiFetch(`/api/cms/pages/${id}`, { method: "DELETE" });
+
+// Image/video uploads embedded inline in a page's rich-text content — not
+// tied to a specific page id, see cms.js's cmsMediaKey comment on the
+// backend. Returns the URL to insert directly into the editor.
+export function uploadCmsMedia(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch("/api/cms/media", { method: "POST", body: formData });
+}

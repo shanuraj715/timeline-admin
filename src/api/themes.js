@@ -12,3 +12,5 @@ export async function uploadThemeImage(id, file) {
   formData.append("image", file);
   return apiFetch(`/api/themes/${id}/image`, { method: "POST", body: formData }).then((d) => d.theme);
 }
+
+export const deleteThemeImage = (id) => apiFetch(`/api/themes/${id}/image`, { method: "DELETE" }).then((d) => d.theme);

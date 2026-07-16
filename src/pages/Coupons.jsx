@@ -21,6 +21,7 @@ const EMPTY_COUPON = {
   isActive: true,
   expiresAt: "",
   maxRedemptions: "",
+  accountAgeRule: { type: "none", relativeDays: "", startDate: "", endDate: "" },
 };
 
 function describeValue(coupon) {
@@ -50,6 +51,15 @@ export default function Coupons() {
         isActive: coupon.isActive,
         expiresAt: coupon.expiresAt || null,
         maxRedemptions: coupon.maxRedemptions ? Number(coupon.maxRedemptions) : null,
+        accountAgeRule: {
+          type: coupon.accountAgeRule?.type || "none",
+          relativeDays:
+            coupon.accountAgeRule?.type === "relative" && coupon.accountAgeRule.relativeDays
+              ? Number(coupon.accountAgeRule.relativeDays)
+              : null,
+          startDate: coupon.accountAgeRule?.type === "absolute" ? coupon.accountAgeRule.startDate || null : null,
+          endDate: coupon.accountAgeRule?.type === "absolute" ? coupon.accountAgeRule.endDate || null : null,
+        },
       };
       return coupon.id ? updateCoupon(coupon.id, payload) : createCoupon(payload);
     },
@@ -105,6 +115,7 @@ export default function Coupons() {
                 <Th>Plans</Th>
                 <Th>Redemptions</Th>
                 <Th>Expires</Th>
+                <Th>Account age</Th>
                 <Th>Active</Th>
                 <Th />
               </Tr>
@@ -128,6 +139,18 @@ export default function Coupons() {
                   <Td className="text-text-muted">
                     {coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : "Never"}
                   </Td>
+                  <Td className="text-text-muted">
+                    {coupon.accountAgeRule?.type === "relative" && (
+                      <Badge tone="primary">Last {coupon.accountAgeRule.relativeDays}d</Badge>
+                    )}
+                    {coupon.accountAgeRule?.type === "absolute" && (
+                      <Badge tone="primary">
+                        {new Date(coupon.accountAgeRule.startDate).toLocaleDateString()} –{" "}
+                        {new Date(coupon.accountAgeRule.endDate).toLocaleDateString()}
+                      </Badge>
+                    )}
+                    {(!coupon.accountAgeRule || coupon.accountAgeRule.type === "none") && "—"}
+                  </Td>
                   <Td>
                     <Switch checked={coupon.isActive} onChange={(isActive) => toggleMutation.mutate({ id: coupon.id, isActive })} />
                   </Td>
@@ -141,6 +164,12 @@ export default function Coupons() {
                             ...coupon,
                             expiresAt: coupon.expiresAt ? coupon.expiresAt.slice(0, 10) : "",
                             maxRedemptions: coupon.maxRedemptions ?? "",
+                            accountAgeRule: {
+                              type: coupon.accountAgeRule?.type || "none",
+                              relativeDays: coupon.accountAgeRule?.relativeDays ?? "",
+                              startDate: coupon.accountAgeRule?.startDate ? coupon.accountAgeRule.startDate.slice(0, 10) : "",
+                              endDate: coupon.accountAgeRule?.endDate ? coupon.accountAgeRule.endDate.slice(0, 10) : "",
+                            },
                           })
                         }
                       />
@@ -199,6 +228,10 @@ function CouponModal({ coupon, plans, onClose, onSave, saving }) {
         ? f.applicablePlanIds.filter((id) => id !== planId)
         : [...f.applicablePlanIds, planId],
     }));
+  }
+
+  function setAccountAgeRule(patch) {
+    setForm((f) => ({ ...f, accountAgeRule: { ...f.accountAgeRule, ...patch } }));
   }
 
   return (
@@ -269,6 +302,51 @@ function CouponModal({ coupon, plans, onClose, onSave, saving }) {
             onChange={(e) => setForm({ ...form, maxRedemptions: e.target.value })}
             placeholder="Unlimited"
           />
+        </div>
+
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-text">Account age restriction</span>
+          <p className="mb-2 text-xs text-text-muted">
+            Only accounts created in this window can redeem the coupon. "Relative" stays evergreen (e.g. always the
+            last 7 days); "Absolute" is a fixed campaign window.
+          </p>
+          <Select
+            value={form.accountAgeRule.type}
+            onChange={(e) => setAccountAgeRule({ type: e.target.value })}
+          >
+            <option value="none">No restriction</option>
+            <option value="relative">Relative — created within the last N days</option>
+            <option value="absolute">Absolute — created between two dates</option>
+          </Select>
+
+          {form.accountAgeRule.type === "relative" && (
+            <Input
+              className="mt-3"
+              label="Created within the last (days)"
+              type="number"
+              min={1}
+              value={form.accountAgeRule.relativeDays}
+              onChange={(e) => setAccountAgeRule({ relativeDays: e.target.value })}
+              placeholder="7"
+            />
+          )}
+
+          {form.accountAgeRule.type === "absolute" && (
+            <div className="mt-3 grid grid-cols-2 gap-4">
+              <Input
+                label="Created after"
+                type="date"
+                value={form.accountAgeRule.startDate}
+                onChange={(e) => setAccountAgeRule({ startDate: e.target.value })}
+              />
+              <Input
+                label="Created before"
+                type="date"
+                value={form.accountAgeRule.endDate}
+                onChange={(e) => setAccountAgeRule({ endDate: e.target.value })}
+              />
+            </div>
+          )}
         </div>
 
         <Checkbox

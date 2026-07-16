@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GalleryHorizontalEnd, HardDrive, Unlock, Coins, ShieldCheck, ShieldOff } from "lucide-react";
+import { GalleryHorizontalEnd, HardDrive, Unlock, Coins, ShieldCheck, ShieldOff, UserRound } from "lucide-react";
 import { fetchUsers, adjustUserCredits } from "../api/users";
 import { runUserAction, fetchUserTimelines } from "../api/admin";
 import { Card } from "../components/ui/Card";
@@ -26,6 +26,7 @@ export default function Users() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [adjustTarget, setAdjustTarget] = useState(null);
+  const [profileTarget, setProfileTarget] = useState(null);
   const [timelinesTarget, setTimelinesTarget] = useState(null);
   const [roleActionTarget, setRoleActionTarget] = useState(null); // { user, action: "promote" | "demote" }
   const { data, isLoading } = useQuery({
@@ -108,6 +109,7 @@ export default function Users() {
                           disabled={actionMutation.isPending}
                         />
                       )}
+                      <IconButton label="View profile" icon={UserRound} onClick={() => setProfileTarget(u)} />
                       <IconButton
                         label="View timelines"
                         icon={GalleryHorizontalEnd}
@@ -132,6 +134,7 @@ export default function Users() {
       </Card>
 
       {adjustTarget && <AdjustCreditsModal user={adjustTarget} onClose={() => setAdjustTarget(null)} />}
+      {profileTarget && <UserProfileModal user={profileTarget} onClose={() => setProfileTarget(null)} />}
       {timelinesTarget && <UserTimelinesModal user={timelinesTarget} onClose={() => setTimelinesTarget(null)} />}
       {roleActionTarget && (
         <Modal
@@ -169,6 +172,55 @@ export default function Users() {
         </Modal>
       )}
     </div>
+  );
+}
+
+const GENDER_LABELS = {
+  male: "Male",
+  female: "Female",
+  other: "Other",
+  prefer_not_to_say: "Prefer not to say",
+};
+
+// Read-only — these fields are collected at registration (see the
+// (auth)/register page) and aren't editable from here. Kept out of the main
+// table entirely (no new columns) since they're not what admins scan a
+// user list for; visible only when they drill into one specific account.
+function ProfileRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border py-2 last:border-0">
+      <span className="text-sm text-text-muted">{label}</span>
+      <span className="text-sm font-medium text-text">{value || "—"}</span>
+    </div>
+  );
+}
+
+function UserProfileModal({ user, onClose }) {
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Profile — ${user.name}`}
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          Close
+        </Button>
+      }
+    >
+      <div className="flex flex-col">
+        <ProfileRow label="Email" value={user.email} />
+        <ProfileRow label="Date of birth" value={user.dob ? formatDate(user.dob) : null} />
+        <ProfileRow label="Gender" value={user.gender ? GENDER_LABELS[user.gender] || user.gender : null} />
+        <ProfileRow label="Phone" value={user.phone} />
+        <ProfileRow label="Country" value={user.country} />
+        <ProfileRow label="Account created" value={formatDate(user.createdAt)} />
+      </div>
+      {!user.dob && !user.gender && !user.phone && !user.country && (
+        <p className="mt-3 text-xs text-text-muted">
+          No profile details on file — this account predates the expanded registration form.
+        </p>
+      )}
+    </Modal>
   );
 }
 
