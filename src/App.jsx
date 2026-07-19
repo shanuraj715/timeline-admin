@@ -4,6 +4,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { RequireAuth } from "./components/RequireAuth";
+import { RequirePermission } from "./components/RequirePermission";
+import { PermissionRevalidator } from "./components/PermissionRevalidator";
 import { Layout } from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -39,6 +41,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <AuthProvider>
+            <PermissionRevalidator />
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<Login />} />
@@ -54,8 +57,22 @@ export default function App() {
                   <Route path="commerce" element={<Commerce />} />
                   <Route path="platform" element={<Platform />} />
                   <Route path="notifications" element={<Notifications />} />
-                  <Route path="pages/new" element={<PageEditor />} />
-                  <Route path="pages/:id" element={<PageEditor />} />
+                  <Route
+                    path="pages/new"
+                    element={
+                      <RequirePermission permission="content.pages">
+                        <PageEditor />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="pages/:id"
+                    element={
+                      <RequirePermission permission="content.pages">
+                        <PageEditor />
+                      </RequirePermission>
+                    }
+                  />
                   {LEGACY_REDIRECTS.map(([from, to]) => (
                     <Route key={from} path={from} element={<Navigate to={to} replace />} />
                   ))}

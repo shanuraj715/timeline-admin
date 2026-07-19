@@ -31,3 +31,34 @@ export const runUserAction = (id, action) =>
 
 export const fetchUserTimelines = (id) =>
   apiFetch(`/api/admin/users/${id}/timelines`).then((d) => d.timelines);
+
+export const fetchVideoQueue = ({ status, page = 1, limit = 20 } = {}) =>
+  apiFetch(`/api/admin/video-queue${toQueryString({ status, page, limit })}`);
+
+export const retryVideoProcessing = (mediaId) =>
+  apiFetch(`/api/admin/video-queue/${mediaId}/retry`, { method: "POST" });
+
+export const suspendTimeline = (id, reason) =>
+  apiFetch(`/api/admin/timelines/${id}/suspend`, { method: "POST", body: JSON.stringify({ reason }) });
+
+export const restoreTimeline = (id) =>
+  apiFetch(`/api/admin/timelines/${id}/restore`, { method: "POST" });
+
+export const transferTimelineOwnership = (id, newOwnerUserId) =>
+  apiFetch(`/api/admin/timelines/${id}/transfer-ownership`, {
+    method: "POST",
+    body: JSON.stringify({ newOwnerUserId }),
+  });
+
+export const banUser = (id, reason) =>
+  apiFetch(`/api/admin/users/${id}/ban`, { method: "POST", body: JSON.stringify({ reason }) });
+
+export const unbanUser = (id) => apiFetch(`/api/admin/users/${id}/unban`, { method: "POST" });
+
+export const forceLogoutUser = (id) => apiFetch(`/api/admin/users/${id}/force-logout`, { method: "POST" });
+
+export const bulkUserAction = (ids, action) =>
+  apiFetch("/api/admin/users/bulk", { method: "POST", body: JSON.stringify({ ids, action }) });
+
+export const bulkTimelineAction = (ids, action) =>
+  apiFetch("/api/admin/timelines/bulk", { method: "POST", body: JSON.stringify({ ids, action }) });

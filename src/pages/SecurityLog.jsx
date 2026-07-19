@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 import { fetchSecurityLog, fetchSecurityLogActions } from "../api/admin";
 import { Card } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
-import { Button } from "../components/ui/Button";
+import { Button, LinkButton } from "../components/ui/Button";
 import { Input, Select } from "../components/ui/Input";
 
 const SEVERE_ACTIONS = new Set(["login_blocked_locked", "refresh_token_reuse_detected", "change_password_failed"]);
 const EMPTY_FILTERS = { userEmail: "", action: "", ip: "", dateFrom: "", dateTo: "" };
+
+function csvExportUrl(filters) {
+  const usp = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) usp.set(key, value);
+  }
+  usp.set("format", "csv");
+  return `/api/admin/security-log?${usp.toString()}`;
+}
 
 function formatDate(d) {
   return new Date(d).toLocaleString(undefined, {
@@ -42,9 +51,14 @@ export default function SecurityLog() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold text-text">Security log</h1>
-        <p className="text-sm text-text-muted">Recent authentication and account-security events.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-text">Security log</h1>
+          <p className="text-sm text-text-muted">Recent authentication and account-security events.</p>
+        </div>
+        <LinkButton variant="secondary" href={csvExportUrl(filters)}>
+          <Download size={14} /> Export CSV
+        </LinkButton>
       </div>
 
       <Card className="p-4">

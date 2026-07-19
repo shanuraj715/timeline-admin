@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSummary, fetchRevenueOverTime, fetchSignupsOverTime } from "../api/analytics";
 import { fetchRecentOrders } from "../api/billing";
@@ -10,23 +11,53 @@ import { Card, CardHeader } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
 import { formatCompactNumber, formatCurrency, formatBytes } from "../lib/format";
+import { useAuth } from "../context/AuthContext";
+import { hasPermission, firstAccessibleRoute } from "../lib/permissions";
 
 const STATUS_TONE = { paid: "success", created: "neutral", failed: "danger", cancelled: "warning", refunded: "warning" };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [range, setRange] = useState({ days: 30 });
+  const canView = hasPermission(user, "dashboard");
 
-  const { data: summary } = useQuery({ queryKey: ["analytics", "summary"], queryFn: fetchSummary });
-  const { data: platformStats } = useQuery({ queryKey: ["admin", "stats"], queryFn: fetchPlatformStats });
+  // Hooks must run unconditionally on every render, so the queries stay
+  // wired up (just disabled) rather than being skipped by an early return —
+  // the actual redirect for a limited admin without "dashboard" happens
+  // below, after every hook has been called.
+  const { data: summary } = useQuery({ queryKey: ["analytics", "summary"], queryFn: fetchSummary, enabled: canView });
+  const { data: platformStats } = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: fetchPlatformStats,
+    enabled: canView,
+  });
   const { data: revenue = [] } = useQuery({
     queryKey: ["analytics", "revenue", range],
     queryFn: () => fetchRevenueOverTime(range),
+    enabled: canView,
   });
   const { data: signups = [] } = useQuery({
     queryKey: ["analytics", "signups", range],
     queryFn: () => fetchSignupsOverTime(range),
+    enabled: canView,
   });
-  const { data: recentOrders = [] } = useQuery({ queryKey: ["orders", "recent"], queryFn: () => fetchRecentOrders(8) });
+  const { data: recentOrders = [] } = useQuery({
+    queryKey: ["orders", "recent"],
+    queryFn: () => fetchRecentOrders(8),
+    enabled: canView,
+  });
+
+  // A limited admin without "dashboard" who lands on "/" (the index route,
+  // e.g. straight after login) gets sent to the first section they actually
+  // have access to instead of a page full of disabled-query "—" placeholders.
+  if (!canView) {
+    const fallback = firstAccessibleRoute(user);
+    return fallback && fallback !== "/" ? (
+      <Navigate to={fallback} replace />
+    ) : (
+      <EmptyState title="No access" description="You don't have access to any sections." />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">

@@ -4,6 +4,8 @@
 // on this app's own origin, which vite.config.js proxies to the backend —
 // see that file's comment for why (keeps cookies same-origin).
 
+import { notifyForbidden } from "./permissionStore";
+
 let refreshPromise = null;
 
 function refreshAccessToken() {
@@ -56,6 +58,20 @@ export async function apiFetch(path, options = {}) {
 
   const contentType = res.headers.get("content-type") || "";
   const data = contentType.includes("application/json") ? await res.json().catch(() => ({})) : null;
+
+  // A 403 (permission missing) or a 401 with code UNAUTHORIZED for a route
+  // outside the login/session-bootstrap flow itself both mean the backend
+  // just re-checked this account's real, current access (every route does
+  // — see the backend's lib/auth/guards.js requirePermission) and said no.
+  // If the sidebar/tabs still show an action as available, that access
+  // changed since this tab last loaded (e.g. a superadmin edited this
+  // account's permissions, or revoked it outright, while it stayed open) —
+  // this is components/PermissionRevalidator.jsx's cue to refetch the
+  // current user and re-render around the corrected permission set.
+  const isAuthBootstrapRoute = path === "/api/auth/me" || path === "/api/auth/refresh" || path === "/api/auth/login";
+  if ((res.status === 403 && data?.code === "FORBIDDEN") || (res.status === 401 && data?.code === "UNAUTHORIZED" && !isAuthBootstrapRoute)) {
+    notifyForbidden();
+  }
 
   if (!res.ok) {
     throw new ApiError(data?.error || `Request failed (${res.status})`, {

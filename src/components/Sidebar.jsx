@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { GalleryHorizontalEnd, LayoutDashboard, Layers, ShoppingBag, ShieldCheck, Bell, LogOut, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { PERMISSION_GROUPS, hasAnyPermission } from "../lib/permissions";
 
 // Each top-level item now contains its own tabbed sub-pages (see
 // pages/Content.jsx, Commerce.jsx, Platform.jsx, Notifications.jsx) —
@@ -9,12 +10,16 @@ import { useAuth } from "../context/AuthContext";
 // instead of its own nav entry. Notifications was split out of Platform
 // (which had grown to 8 tabs) into its own item once email templates/
 // providers landed, keeping each grouped page to a handful of tabs.
+//
+// `group` matches a key in PERMISSION_GROUPS — a nav item is shown if the
+// signed-in account holds at least one permission in that group (limited
+// admins otherwise see only the sections they actually have tabs for).
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", end: true, icon: LayoutDashboard },
-  { to: "/content", label: "Content", icon: Layers },
-  { to: "/commerce", label: "Commerce", icon: ShoppingBag },
-  { to: "/platform", label: "Platform", icon: ShieldCheck },
-  { to: "/notifications", label: "Notifications", icon: Bell },
+  { to: "/", label: "Dashboard", end: true, icon: LayoutDashboard, group: "dashboard" },
+  { to: "/content", label: "Content", icon: Layers, group: "content" },
+  { to: "/commerce", label: "Commerce", icon: ShoppingBag, group: "commerce" },
+  { to: "/platform", label: "Platform", icon: ShieldCheck, group: "platform" },
+  { to: "/notifications", label: "Notifications", icon: Bell, group: "notifications" },
 ];
 
 // Static and always visible at lg+ (plenty of room); below that it's a
@@ -22,7 +27,11 @@ const NAV_ITEMS = [
 // content gets the full viewport width instead of losing 240px to a
 // sidebar that a phone/tablet-width screen can't really spare.
 export function Sidebar({ open, onClose }) {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const items = NAV_ITEMS.filter((item) => {
+    const group = PERMISSION_GROUPS.find((g) => g.key === item.group);
+    return hasAnyPermission(user, group.permissions.map((p) => p.key));
+  });
 
   return (
     <>
@@ -52,7 +61,7 @@ export function Sidebar({ open, onClose }) {
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="flex flex-col gap-0.5">
-            {NAV_ITEMS.map((item) => (
+            {items.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}

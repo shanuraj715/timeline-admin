@@ -10,11 +10,11 @@ export function AuthProvider({ children }) {
   const refresh = useCallback(async () => {
     try {
       const data = await apiFetch("/api/auth/me");
-      // Defense in depth: a session that's valid but no longer belongs to a
-      // superadmin (e.g. demoted after logging in here) shouldn't be
-      // treated as authenticated for this app, even though login() already
-      // rejects this case at sign-in time.
-      setUser(data.user.role === "superadmin" ? data.user : null);
+      // Defense in depth: a session that's valid but no longer holds admin
+      // access (e.g. demoted after logging in here) shouldn't be treated as
+      // authenticated for this app, even though login() already rejects
+      // this case at sign-in time.
+      setUser(data.user.role === "superadmin" || data.user.role === "admin" ? data.user : null);
     } catch {
       setUser(null);
     }
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      if (data.user.role !== "superadmin") {
+      if (data.user.role !== "superadmin" && data.user.role !== "admin") {
         await apiFetch("/api/auth/logout", { method: "POST" });
         setError("This account doesn't have admin access.");
         setUser(null);
