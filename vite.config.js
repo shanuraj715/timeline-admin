@@ -20,6 +20,10 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true,
+    // Vite's dev server rejects unrecognized Host headers by default (DNS
+    // rebinding protection) — needed since this runs behind nginx on
+    // admin.mytimelyne.com in production, not just on localhost.
+    allowedHosts: ["admin.mytimelyne.com"],
     proxy: {
       "/api": {
         target: process.env.BACKEND_URL || "http://localhost:4000",
