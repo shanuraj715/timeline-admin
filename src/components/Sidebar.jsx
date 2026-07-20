@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { GalleryHorizontalEnd, LayoutDashboard, Layers, ShoppingBag, ShieldCheck, Bell, LogOut, X } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutDashboard, Layers, ShoppingBag, ShieldCheck, Bell, Megaphone, LogOut, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { PERMISSION_GROUPS, hasAnyPermission } from "../lib/permissions";
 
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { to: "/commerce", label: "Commerce", icon: ShoppingBag, group: "commerce" },
   { to: "/platform", label: "Platform", icon: ShieldCheck, group: "platform" },
   { to: "/notifications", label: "Notifications", icon: Bell, group: "notifications" },
+  { to: "/ads", label: "Ads", icon: Megaphone, group: "ads" },
 ];
 
 // Static and always visible at lg+ (plenty of room); below that it's a

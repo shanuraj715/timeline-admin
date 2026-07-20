@@ -5,11 +5,12 @@ import { FieldHelp } from "./ui/Input";
 import { IconButton } from "./ui/IconButton";
 import { useToast } from "../context/ToastContext";
 
-// One upload slot (used twice by ThemedImageField below, once per variant).
-// Not exported — Light/Dark always come as a pair via ThemedImageField, no
-// other call site needs a bare single-image uploader (Homepage.jsx's old
-// local ImageField, which this replaces, was already scoped that way).
-function ImageSlot({ label, help, value, onChange, onRemove, disabled, disabledHint }) {
+// One upload slot — used twice by ThemedImageField below (once per Light/
+// Dark variant), and exported for reuse anywhere a single, non-themed image
+// is enough on its own (e.g. WhyChooseUs.jsx's competitor logos, which
+// render inside their own neutral chip on the frontend and don't need a
+// separate dark-mode variant).
+export function ImageSlot({ label, help, value, onChange, onRemove, disabled, disabledHint }) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef(null);
   const toast = useToast();

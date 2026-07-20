@@ -13,6 +13,7 @@ import Content from "./pages/Content";
 import Commerce from "./pages/Commerce";
 import Platform from "./pages/Platform";
 import Notifications from "./pages/Notifications";
+import Ads from "./pages/Ads";
 import PageEditor from "./pages/PageEditor";
 
 const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ export default function App() {
                   <Route path="commerce" element={<Commerce />} />
                   <Route path="platform" element={<Platform />} />
                   <Route path="notifications" element={<Notifications />} />
+                  <Route path="ads" element={<Ads />} />
                   <Route
                     path="pages/new"
                     element={
