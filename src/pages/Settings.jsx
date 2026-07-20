@@ -22,19 +22,15 @@ export default function Settings() {
 
   const [freeStorageMb, setFreeStorageMb] = useState("");
   const [freeTimelines, setFreeTimelines] = useState("");
-  const [creditsPerExtraTimeline, setCreditsPerExtraTimeline] = useState("");
   const [defaultCreditsOnSignup, setDefaultCreditsOnSignup] = useState("");
-  const [storageUnitMb, setStorageUnitMb] = useState("");
-  const [storageUnitPriceCredits, setStorageUnitPriceCredits] = useState("");
+  const [allowGuestViewing, setAllowGuestViewing] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
     setFreeStorageMb(String(Math.round(settings.freeStorageBytesPerTimeline / BYTES_PER_MB)));
     setFreeTimelines(String(settings.freeTimelinesPerAccount));
-    setCreditsPerExtraTimeline(String(settings.creditsPerExtraTimeline));
     setDefaultCreditsOnSignup(String(settings.defaultCreditsOnSignup ?? 0));
-    setStorageUnitMb(String(Math.round(settings.storageUnitBytes / BYTES_PER_MB)));
-    setStorageUnitPriceCredits(String(settings.storageUnitPriceCredits));
+    setAllowGuestViewing(Boolean(settings.allowGuestViewing));
   }, [settings]);
 
   const saveMutation = useMutation({
@@ -42,10 +38,8 @@ export default function Settings() {
       updatePlatformSettings({
         freeStorageBytesPerTimeline: Math.round(Number(freeStorageMb) * BYTES_PER_MB),
         freeTimelinesPerAccount: Number(freeTimelines),
-        creditsPerExtraTimeline: Number(creditsPerExtraTimeline),
         defaultCreditsOnSignup: Number(defaultCreditsOnSignup),
-        storageUnitBytes: Math.round(Number(storageUnitMb) * BYTES_PER_MB),
-        storageUnitPriceCredits: Number(storageUnitPriceCredits),
+        allowGuestViewing,
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(["platform-settings"], updated);
@@ -218,13 +212,6 @@ export default function Settings() {
               onChange={(e) => setFreeTimelines(e.target.value)}
             />
             <Input
-              label="Credits to create an extra timeline (beyond the free count)"
-              type="number"
-              min={0}
-              value={creditsPerExtraTimeline}
-              onChange={(e) => setCreditsPerExtraTimeline(e.target.value)}
-            />
-            <Input
               label="Credits granted automatically on signup"
               help="Added to every new account's balance the moment they register. 0 means no signup bonus."
               type="number"
@@ -240,26 +227,15 @@ export default function Settings() {
 
         <Card className="mb-4 break-inside-avoid">
           <CardHeader
-            title="Storage pricing"
-            description="A timeline can buy extra storage in whole multiples of this amount — e.g. 100MB at 10 credits means 300MB costs 30 credits, and 150MB is rejected outright."
+            title="Guest viewing"
+            description="Global switch for anonymous (not logged in) access to Public timelines — off means every public timeline requires login regardless of the owner's own setting. Each owner also has to opt in per timeline (Timeline settings → Visibility), off by default, so this alone doesn't expose anything. The credit price to unlock a timeline's viewer list is set in Commerce → Credit costs."
           />
           <CardBody className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Unit size (MB)"
-                type="number"
-                min={1}
-                value={storageUnitMb}
-                onChange={(e) => setStorageUnitMb(e.target.value)}
-              />
-              <Input
-                label="Price per unit (credits)"
-                type="number"
-                min={1}
-                value={storageUnitPriceCredits}
-                onChange={(e) => setStorageUnitPriceCredits(e.target.value)}
-              />
-            </div>
+            <Switch
+              checked={allowGuestViewing}
+              onChange={setAllowGuestViewing}
+              label={allowGuestViewing ? "Anonymous visitors can view Public timelines" : "Anonymous visitors are sent to login"}
+            />
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="self-start">
               Save
             </Button>

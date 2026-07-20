@@ -14,3 +14,12 @@ export async function uploadThemeImage(id, file) {
 }
 
 export const deleteThemeImage = (id) => apiFetch(`/api/themes/${id}/image`, { method: "DELETE" }).then((d) => d.theme);
+
+export async function uploadThemeImageDark(id, file) {
+  const formData = new FormData();
+  formData.append("image", file);
+  return apiFetch(`/api/themes/${id}/image-dark`, { method: "POST", body: formData }).then((d) => d.theme);
+}
+
+export const deleteThemeImageDark = (id) =>
+  apiFetch(`/api/themes/${id}/image-dark`, { method: "DELETE" }).then((d) => d.theme);

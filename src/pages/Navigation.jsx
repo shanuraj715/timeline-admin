@@ -9,9 +9,38 @@ import { IconButton } from "../components/ui/IconButton";
 import { Input, Checkbox } from "../components/ui/Input";
 import { Switch } from "../components/ui/Switch";
 import { Modal } from "../components/ui/Modal";
+import { Badge } from "../components/ui/Badge";
 import { useToast } from "../context/ToastContext";
 
-const EMPTY_ITEM = { label: "", url: "", openInNewTab: false, enabled: true, children: [] };
+// Compact "which devices" indicator for the list table — full labels live
+// in the edit modal's own checkboxes.
+function VisibilityBadges({ item }) {
+  const devices = [
+    { key: "showOnMobile", label: "M" },
+    { key: "showOnTablet", label: "T" },
+    { key: "showOnDesktop", label: "D" },
+  ];
+  return (
+    <div className="flex gap-1">
+      {devices.map((d) => (
+        <Badge key={d.key} tone={item[d.key] ? "primary" : "neutral"}>
+          {d.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+const EMPTY_ITEM = {
+  label: "",
+  url: "",
+  openInNewTab: false,
+  enabled: true,
+  showOnMobile: true,
+  showOnTablet: true,
+  showOnDesktop: true,
+  children: [],
+};
 
 export default function Navigation() {
   const queryClient = useQueryClient();
@@ -54,12 +83,17 @@ export default function Navigation() {
   async function move(index, direction) {
     const target = index + direction;
     if (target < 0 || target >= items.length) return;
-    const a = items[index];
-    const b = items[target];
-    await reorderNavItems([
-      { id: a._id, order: b.order },
-      { id: b._id, order: a.order },
-    ]);
+
+    // Re-numbers the *whole* list to sequential 0..n-1 based on the new
+    // visual order, rather than swapping the two moved items' existing
+    // `order` values — items created via "Add item" have no order field in
+    // EMPTY_ITEM below, so every item historically landed on the schema's
+    // default of 0. Swapping 0 with 0 is a no-op, which is exactly why
+    // reordering looked broken. Reassigning the full list on every move is
+    // self-healing regardless of whatever's currently stored.
+    const reordered = items.slice();
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    await reorderNavItems(reordered.map((item, i) => ({ id: item._id, order: i })));
     invalidate();
   }
 
@@ -70,7 +104,7 @@ export default function Navigation() {
           <h1 className="text-lg font-semibold text-text">Navigation</h1>
           <p className="text-sm text-text-muted">Header menu items shown on the public site.</p>
         </div>
-        <Button onClick={() => setModalItem({ ...EMPTY_ITEM })}>
+        <Button onClick={() => setModalItem({ ...EMPTY_ITEM, order: items.length })}>
           <Plus size={16} /> Add item
         </Button>
       </div>
@@ -88,6 +122,7 @@ export default function Navigation() {
                 <Th>Label</Th>
                 <Th>URL</Th>
                 <Th>Children</Th>
+                <Th>Visible on</Th>
                 <Th>Enabled</Th>
                 <Th />
               </Tr>
@@ -118,6 +153,9 @@ export default function Navigation() {
                   <Td className="font-medium">{item.label}</Td>
                   <Td className="text-text-muted">{item.url}</Td>
                   <Td className="text-text-muted">{item.children.length || "—"}</Td>
+                  <Td>
+                    <VisibilityBadges item={item} />
+                  </Td>
                   <Td>
                     <Switch
                       checked={item.enabled}
@@ -218,6 +256,27 @@ function NavItemModal({ item, onClose, onSave, saving }) {
             checked={form.enabled}
             onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text">Visible on</span>
+          <div className="flex gap-4">
+            <Checkbox
+              label="Mobile"
+              checked={form.showOnMobile}
+              onChange={(e) => setForm({ ...form, showOnMobile: e.target.checked })}
+            />
+            <Checkbox
+              label="Tablet"
+              checked={form.showOnTablet}
+              onChange={(e) => setForm({ ...form, showOnTablet: e.target.checked })}
+            />
+            <Checkbox
+              label="Desktop"
+              checked={form.showOnDesktop}
+              onChange={(e) => setForm({ ...form, showOnDesktop: e.target.checked })}
+            />
+          </div>
         </div>
 
         <div className="border-t border-border pt-4">

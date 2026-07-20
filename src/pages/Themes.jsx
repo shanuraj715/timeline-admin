@@ -23,6 +23,8 @@ import {
   setDefaultTheme,
   uploadThemeImage,
   deleteThemeImage,
+  uploadThemeImageDark,
+  deleteThemeImageDark,
 } from "../api/themes";
 import { Card, CardBody } from "../components/ui/Card";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "../components/ui/Table";
@@ -723,9 +725,12 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
   const [slugTouched, setSlugTouched] = useState(Boolean(theme.id));
   const [uploading, setUploading] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
+  const [uploadingDark, setUploadingDark] = useState(false);
+  const [removingImageDark, setRemovingImageDark] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [collapsed, setCollapsed] = useState({});
   const fileInputRef = useRef(null);
+  const fileInputDarkRef = useRef(null);
   const toast = useToast();
 
   function toggleSection(id) {
@@ -767,8 +772,14 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
   // Scoped to just these server-derived fields so it doesn't clobber
   // whatever the admin is mid-typing in the rest of the form.
   useEffect(() => {
-    setForm((f) => ({ ...f, id: theme.id, imageUrl: theme.imageUrl, updatedAt: theme.updatedAt }));
-  }, [theme.id, theme.imageUrl, theme.updatedAt]);
+    setForm((f) => ({
+      ...f,
+      id: theme.id,
+      imageUrl: theme.imageUrl,
+      imageUrlDark: theme.imageUrlDark,
+      updatedAt: theme.updatedAt,
+    }));
+  }, [theme.id, theme.imageUrl, theme.imageUrlDark, theme.updatedAt]);
 
   function handleNameChange(e) {
     const name = e.target.value;
@@ -805,6 +816,35 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
       toast(err.message, "error");
     } finally {
       setRemovingImage(false);
+    }
+  }
+
+  async function handleFileChangeDark(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingDark(true);
+    try {
+      const updated = await uploadThemeImageDark(theme.id, file);
+      onImageUploaded(updated);
+      toast("Dark theme image uploaded", "success");
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setUploadingDark(false);
+      if (fileInputDarkRef.current) fileInputDarkRef.current.value = "";
+    }
+  }
+
+  async function handleRemoveImageDark() {
+    setRemovingImageDark(true);
+    try {
+      const updated = await deleteThemeImageDark(theme.id);
+      onImageUploaded(updated);
+      toast("Dark theme image removed", "success");
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setRemovingImageDark(false);
     }
   }
 
@@ -926,32 +966,73 @@ function ThemeModal({ theme, onClose, onSave, saving, onImageUploaded }) {
           onToggle={toggleSection}
         >
           {theme.id ? (
-            <div className="flex items-center gap-3">
-              {form.imageUrl && (
-                <>
-                  <img
-                    src={`${form.imageUrl}?t=${form.updatedAt || ""}`}
-                    alt=""
-                    className="h-16 w-24 rounded-md border border-border object-cover"
+            <>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-text-muted">Light theme image</span>
+                <div className="flex items-center gap-3">
+                  {form.imageUrl && (
+                    <>
+                      <img
+                        src={`${form.imageUrl}?t=${form.updatedAt || ""}`}
+                        alt=""
+                        className="h-16 w-24 rounded-md border border-border object-cover"
+                      />
+                      <IconButton
+                        label="Remove image"
+                        icon={X}
+                        variant="danger"
+                        onClick={handleRemoveImage}
+                        disabled={removingImage}
+                      />
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={uploading}
+                    className="text-sm text-text-muted"
                   />
-                  <IconButton
-                    label="Remove image"
-                    icon={X}
-                    variant="danger"
-                    onClick={handleRemoveImage}
-                    disabled={removingImage}
-                  />
-                </>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                disabled={uploading}
-                className="text-sm text-text-muted"
-              />
-            </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                  Dark theme image
+                  <FieldHelp text="Optional — shown instead of the light image when the site is in dark mode. Falls back to the light image if left empty." />
+                </span>
+                <div className="flex items-center gap-3">
+                  {form.imageUrlDark && (
+                    <>
+                      <img
+                        src={`${form.imageUrlDark}?t=${form.updatedAt || ""}`}
+                        alt=""
+                        className="h-16 w-24 rounded-md border border-border object-cover"
+                      />
+                      <IconButton
+                        label="Remove dark image"
+                        icon={X}
+                        variant="danger"
+                        onClick={handleRemoveImageDark}
+                        disabled={removingImageDark}
+                      />
+                    </>
+                  )}
+                  {form.imageUrl ? (
+                    <input
+                      ref={fileInputDarkRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChangeDark}
+                      disabled={uploadingDark}
+                      className="text-sm text-text-muted"
+                    />
+                  ) : (
+                    <span className="text-xs text-text-muted">Upload a light theme image first</span>
+                  )}
+                </div>
+              </div>
+            </>
           ) : (
             <p className="text-sm text-text-muted">Save the theme first, then you can upload a background image.</p>
           )}
