@@ -52,7 +52,7 @@ export default function Login() {
       </div>
       <Card className="w-full max-w-sm">
         <CardBody>
-          <h1 className="mb-1 text-lg font-semibold text-text">Timeline Admin</h1>
+          <h1 className="mb-1 text-lg font-semibold text-text">MyTimelyne Admin</h1>
           <p className="mb-6 text-sm text-text-muted">Sign in with your admin account.</p>
 
           {googleEnabled && (
