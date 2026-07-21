@@ -1,4 +1,4 @@
-import { Compass, PanelBottom, FileText, Palette, LayoutTemplate, Sparkle, HelpCircle } from "lucide-react";
+import { Compass, PanelBottom, FileText, Palette, LayoutTemplate, Sparkle, HelpCircle, Globe2 } from "lucide-react";
 import { Tabs } from "../components/ui/Tabs";
 import { EmptyState } from "../components/ui/Table";
 import { useAuth } from "../context/AuthContext";
@@ -10,11 +10,13 @@ import Homepage from "./Homepage";
 import WhyChooseUs from "./WhyChooseUs";
 import Branding from "./Branding";
 import Themes from "./Themes";
+import Sitemap from "./Sitemap";
 
 const ALL_TABS = [
   { key: "navigation", label: "Navigation", icon: Compass, permission: "content.navigation" },
   { key: "footer", label: "Footer", icon: PanelBottom, permission: "content.footer" },
   { key: "pages", label: "Pages", icon: FileText, permission: "content.pages" },
+  { key: "sitemap", label: "Sitemap", icon: Globe2, permission: "content.sitemap" },
   { key: "homepage", label: "Homepage", icon: LayoutTemplate, permission: "content.homepage" },
   { key: "whyChooseUs", label: "Why MyTimelyne", icon: HelpCircle, permission: "content.whyChooseUs" },
   { key: "branding", label: "Branding", icon: Sparkle, permission: "content.branding" },
@@ -36,6 +38,7 @@ export default function Content() {
           {active === "navigation" && <Navigation />}
           {active === "footer" && <Footer />}
           {active === "pages" && <PagesList />}
+          {active === "sitemap" && <Sitemap />}
           {active === "homepage" && <Homepage />}
           {active === "whyChooseUs" && <WhyChooseUs />}
           {active === "branding" && <Branding />}

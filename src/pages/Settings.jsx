@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { fetchPlatformSettings, updatePlatformSettings } from "../api/settings";
 import { fetchRecaptchaSettings, updateRecaptchaSettings } from "../api/recaptcha";
 import { fetchGoogleOAuthSettings, updateGoogleOAuthSettings } from "../api/googleOAuth";
+import { fetchAnalyticsSettings, updateAnalyticsSettings } from "../api/analyticsSettings";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Input, Textarea } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -123,6 +124,28 @@ export default function Settings() {
       queryClient.setQueryData(["google-oauth-settings"], updated);
       setGoogleClientSecret(updated.clientSecretMasked || "");
       toast("Google sign-in settings saved", "success");
+    },
+    onError: (err) => toast(err.message, "error"),
+  });
+
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["analytics-settings"],
+    queryFn: fetchAnalyticsSettings,
+  });
+  const [measurementId, setMeasurementId] = useState("");
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!analytics) return;
+    setMeasurementId(analytics.measurementId || "");
+    setAnalyticsEnabled(analytics.enabled);
+  }, [analytics]);
+
+  const analyticsMutation = useMutation({
+    mutationFn: () => updateAnalyticsSettings({ measurementId, enabled: analyticsEnabled }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["analytics-settings"], updated);
+      toast("Google Analytics settings saved", "success");
     },
     onError: (err) => toast(err.message, "error"),
   });
@@ -334,6 +357,38 @@ export default function Settings() {
               disabled={googleOAuthMutation.isPending}
               className="self-start"
             >
+              Save
+            </Button>
+          </CardBody>
+        </Card>
+
+        <Card className="mb-4 break-inside-avoid">
+          <CardHeader
+            title={
+              <div className="flex items-center gap-2">
+                Google Analytics
+                {!analyticsLoading && (
+                  <Badge tone={analytics?.measurementId ? "success" : "neutral"}>
+                    {analytics?.measurementId ? "Configured" : "Not configured"}
+                  </Badge>
+                )}
+              </div>
+            }
+            description="GA4 Measurement ID for tracking visits to the main site. Leave the ID blank or turn tracking off to stop loading Google Analytics entirely."
+          />
+          <CardBody className="flex flex-col gap-4">
+            <Input
+              label="Measurement ID"
+              value={measurementId}
+              onChange={(e) => setMeasurementId(e.target.value)}
+              placeholder="G-XXXXXXXXXX"
+            />
+            <Switch
+              checked={analyticsEnabled}
+              onChange={setAnalyticsEnabled}
+              label={analyticsEnabled ? "Tracking is active on the main site" : "Tracking is off"}
+            />
+            <Button onClick={() => analyticsMutation.mutate()} disabled={analyticsMutation.isPending} className="self-start">
               Save
             </Button>
           </CardBody>
