@@ -7,6 +7,7 @@ import {
   Database,
   KeyRound,
   Activity,
+  Zap,
 } from "lucide-react";
 import { Tabs } from "../components/ui/Tabs";
 import { EmptyState } from "../components/ui/Table";
@@ -20,12 +21,14 @@ import Settings from "./Settings";
 import Storage from "./Storage";
 import AdminAccounts from "./AdminAccounts";
 import VideoQueue from "./VideoQueue";
+import CachePage from "./Cache";
 
 const ALL_TABS = [
   { key: "users", label: "Users", icon: UsersIcon, permission: "platform.users" },
   { key: "timelines", label: "Timelines", icon: GalleryHorizontalEnd, permission: "platform.timelines" },
   { key: "storage", label: "Storage", icon: Database, permission: "platform.storage" },
   { key: "system", label: "System health", icon: Activity, permission: "platform.system" },
+  { key: "cache", label: "Cache", icon: Zap, permission: "platform.cache" },
   { key: "security", label: "Security log", icon: ShieldAlert, permission: "platform.security" },
   { key: "flags", label: "Feature flags", icon: Flag, permission: "platform.flags" },
   { key: "settings", label: "Settings", icon: SlidersHorizontal, permission: "platform.settings" },
@@ -48,6 +51,7 @@ export default function Platform() {
           {active === "timelines" && <Timelines />}
           {active === "storage" && <Storage />}
           {active === "system" && <VideoQueue />}
+          {active === "cache" && <CachePage />}
           {active === "security" && <SecurityLog />}
           {active === "flags" && <FeatureFlags />}
           {active === "settings" && <Settings />}
