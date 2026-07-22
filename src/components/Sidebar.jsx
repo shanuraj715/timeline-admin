@@ -50,7 +50,7 @@ export function Sidebar({ open, onClose }) {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <GalleryHorizontalEnd size={16} />
             </span>
-            <span className="text-base font-semibold text-text">Timeline Admin</span>
+            <span className="text-base font-semibold text-text">MyTimelyne Admin</span>
           </div>
           <button
             onClick={onClose}
